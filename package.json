@@ -1,0 +1,42 @@
+{
+  "name": "refocus-utilities",
+  "version": "1.0.0",
+  "description": "Refocus utilities",
+  "main": "index.js",
+  "directories": {
+    "src": "src",
+    "test": "test"
+  },
+  "scripts": {
+    "jscs": "./node_modules/jscs/bin/jscs src test",
+    "test": "npm run jscs && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --recursive ./test && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salesforce/refocus-utilities.git"
+  },
+  "keywords": [
+    "refocus"
+  ],
+  "author": "Salesforce CX Tools",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/salesforce/refocus-utilities/issues"
+  },
+  "homepage": "https://github.com/salesforce/refocus-utilities#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "command-line-args": "^5.0.2",
+    "command-line-usage": "^5.0.4",
+    "debug": "^3.1.0",
+    "ioredis": "^3.2.2",
+    "redis": "^2.8.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "ioredis-mock": "^3.7.1",
+    "istanbul": "^0.4.5",
+    "jscs": "^3.0.7",
+    "mocha": "^5.0.5"
+  }
+}
