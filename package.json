@@ -19,7 +19,7 @@
     "refocus"
   ],
   "author": "Salesforce CX Tools",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/salesforce/refocus-utilities/issues"
   },
