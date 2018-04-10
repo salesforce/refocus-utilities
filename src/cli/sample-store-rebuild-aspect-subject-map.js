@@ -8,10 +8,16 @@
 
 /**
  * src/cli/sample-store-rebuild-aspect-subject-map.js
+ *
+ * Configure the CLI.
  */
 'use strict';
 const commandLineUsage = require('command-line-usage');
 
+/*
+ * Definitions for command line args and options
+ * (https://github.com/75lb/command-line-args)
+ */
 const optionDefinitions = [
   {
     name: 'redisUrl',
@@ -27,6 +33,11 @@ const optionDefinitions = [
     description: 'Print this usage guide',
   },
 ];
+
+/*
+ * Definitions for generated command line usage information
+ * (https://github.com/75lb/command-line-usage)
+ */
 const sections = [
   {
     header: 'refocus-utilities',
