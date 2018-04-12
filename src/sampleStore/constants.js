@@ -1,0 +1,27 @@
+/**
+ * Copyright (c) 2018, salesforce.com, inc.
+ * All rights reserved.
+ * Licensed under the BSD 3-Clause license.
+ * For full license text, see LICENSE.txt file in the repo root or
+ * https://opensource.org/licenses/BSD-3-Clause
+ */
+
+/**
+ * src/sampleStore/constants.js
+ *
+ * Sample Store Keys and Prefixes.
+ */
+'use strict';
+module.exports = {
+  key: {
+    aspects: 'samsto:aspects',
+    subjects: 'samsto:subjects',
+  },
+  pfx: {
+    aspect: 'samsto:aspect:',
+    asm: 'samsto:aspsubmap:',
+    subject: 'samsto:subject:',
+    subjects: 'samsto:subjects:',
+    sam: 'samsto:subaspmap:',
+  },
+};
