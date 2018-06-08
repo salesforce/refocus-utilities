@@ -30,7 +30,7 @@ const stream = redis.scanStream({ match: 'samsto:sample:*' });
 const currentTime = new Date();
 const oneMinuteLessTime = new Date(currentTime - 60000);
 const sampleList = [];
-
+const count = 0;
 
 stream.on('data', (found) => {
   found.forEach((sample) => {
@@ -39,6 +39,7 @@ stream.on('data', (found) => {
       const updateTime = s.updatedAt;
         // compare
         if (new Date(updateTime) >= new Date(oneMinuteLessTime)) {
+          count++;
           sampleList.push(s.name);
         }
       });
@@ -46,5 +47,9 @@ stream.on('data', (found) => {
 });
 
 stream.on('end', () => {
+  console.log(count);
   console.log(sampleList);
+  process.exit(0);
 });
+
+// postgres://us1cpb1nudctv:p31e5c1b50574fef88b873c989f058e10879c01394f4a2ff97b1571513e72346e@ec2-52-21-122-26.compute-1.amazonaws.com:5432/dbcpvn1oq71iuanp
