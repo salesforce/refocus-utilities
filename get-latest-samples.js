@@ -30,8 +30,10 @@ const stream = redis.scanStream({ match: 'samsto:sample:*' });
 const currentTime = new Date();
 const oneMinuteLessTime = new Date(currentTime - 60000);
 const sampleList = [];
-const count = 0;
+let count = 0;
 
+
+console.log('Starting to grab data');
 stream.on('data', (found) => {
   found.forEach((sample) => {
     redis.hgetall(sample)
