@@ -35,7 +35,6 @@ let count = 0;
 
 console.log('Starting to grab data');
 stream.on('data', (found) => {
-  console.log(found.length, count);
   found.forEach((sample) => {
     redis.hgetall(sample)
    .then((s) => {
