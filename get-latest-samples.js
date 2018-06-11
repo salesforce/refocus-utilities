@@ -43,6 +43,7 @@ stream.on('data', (found) => {
         if (new Date(updateTime) >= new Date(oneMinuteLessTime)) {
           count++;
           sampleList.push(s.name);
+          console.log(s.name);
         }
       });
   });
@@ -50,7 +51,7 @@ stream.on('data', (found) => {
 
 stream.on('end', () => {
   console.log(count);
-  console.log(sampleList);
+  // console.log(sampleList);
   process.exit(0);
 });
 
