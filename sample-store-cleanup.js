@@ -10,6 +10,7 @@
  * sample-store-cleanup.js
  *
  * Clean up sample store
+ * - Check for all samples that are present in redis or not which are in master list
  * - Delete keys for samples which are not in the master list
  * - Validate each sample i.e aspectId, subjectId, name and if it failed to
  *   validate then remove that sample key as well as from master list of samples.
@@ -61,10 +62,23 @@ function validateSample(sample) {
   });
 }
 
+
 debug('Get Master samples list');
 redis.smembers('samsto:samples')
 .then((s) => {
   samples = s;
+  debug('Check for all samples that are present in redis or not which are in master list');
+  for (let x = 0; x < samples.length; x++) {
+    redis.exists(samples[x])
+    .then((s) => {
+      if (!s) {
+        redis.srem('samsto:samples', samples[x])
+        .then(() => {
+          debug('Removing %s sample from master list samsto:samples', samples[x]);
+        });
+      }
+    });
+  }
 })
 .then(() => {
   debug('Scanning for "samsto:sample:*"');
@@ -72,7 +86,6 @@ redis.smembers('samsto:samples')
 
   stream.on('data', (found) => {
     found.forEach((sample) => {
-
       // check whether sample is in master list or not
       if (!samples.includes(sample)) {
         debug('Deleting Sample %s', sample);
