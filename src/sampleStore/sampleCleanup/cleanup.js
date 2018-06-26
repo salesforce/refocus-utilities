@@ -23,6 +23,9 @@ const debug = require('debug')
   ('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
 const helpers = require('../helpers');
+const ONE = 1;
+const TWO = 2;
+const ZERO = 0;
 let samples = [];
 let deletedSample = [];
 
@@ -32,24 +35,22 @@ let deletedSample = [];
  * @params {String} sample sample name
  * @throws an error if sample validation is failed
  */
-function validateSample(redis, sample) {
-  return redis.hgetall(sample)
-  .then((s) => {
-    // check name
-    if (!s.name || s.name.indexOf('|') < 0) {
-      throw new Error('Sample name is not valid');
-    }
+function validateSample(sample) {
+  if (!sample.name || sample.name.indexOf('|') < 0) {
+    return false;
+  }
 
-    // check subject ID
-    if (!s.subjectId) {
-      throw new Error('Sample does not have subjectId');
-    }
+  // check subject ID
+  if (!sample.subjectId) {
+    return false;
+  }
 
-    // check aspect ID
-    if (!s.aspectId) {
-      throw new Error('Sample does not have subjectId');
-    }
-  });
+  // check aspect ID
+  if (!sample.aspectId) {
+    return false;
+  }
+
+  return true;
 }
 
 module.exports = (redis) => new Promise((resolve, reject) => {
@@ -58,50 +59,50 @@ module.exports = (redis) => new Promise((resolve, reject) => {
   .then((s) => {
     samples = s;
     debug('Check for all samples that are present in redis or not');
-    for (let x = 0; x < samples.length; x++) {
-      redis.exists(samples[x])
-      .then((s) => {
-        if (!s) {
-          redis.srem(samsto.key.samples, samples[x])
-          .then(() => {
-            debug('Removing %s sample from master list samsto:samples', samples[x]);
-          });
-        }
+    let commands = s.map(sample => ['exists', sample]);
+
+    redis.multi(commands).exec()
+    .then((res) => {
+      commands = s.reduce((acc, sample, currentIndex) => {
+        if (!res[currentIndex][ONE]) acc.push(['srem', samsto.key.samples, sample]);
+        return acc;
+      }, []);
+
+      redis.multi(commands).exec()
+      .then((_res) => {
+        commands.map((sampleDel, currentIndex) => {
+          if (_res[currentIndex][ONE])
+            debug('Removing %s sample from master list samsto:samples', sampleDel[TWO]);
+        });
       });
-    }
+    });
   })
   .then(() => {
     debug('Scanning for "samsto:sample:*"');
     const stream = redis.scanStream({ match: 'samsto:sample:*' });
 
-    stream.on('data', (found) => {
-      found.forEach((sample) => {
-        // check whether sample is in master list or not
-        if (!samples.includes(sample)) {
-          debug('Deleting Sample %s', sample);
-          redis.del(sample)
-          .then(() => {
-            // gather deleted sample in one list
-            deletedSample.push(sample);
-          });
-        } else {
-          // if sample is in master list then check for validation
-          validateSample(redis, sample)
-          .catch((err) => {
-            debug('Validation error with %s sample, %o', sample, err);
-            debug('Deleting Sample %s', sample);
-            redis.del(sample)
-            .then(() => {
-              // gather deleted sample in one list
-              deletedSample.push(sample);
-
-              // remove sample from master list of samples
-              debug('Removing %s sample from master list samsto:samples', sample);
-              redis.srem(samsto.key.samples, sample);
-            });
-          });
-        }
+    stream.on('data', (sampleStream) => {
+      const commands = sampleStream.map((sample) => {
+        if (samples.includes(sample)) return ['hgetall', sample];
+        deletedSample.push(sample);
+        return ['del', sample];
       });
+
+      redis.multi(commands).exec()
+      .then((res) =>
+        res.reduce((acc, indRes, currentIndex) => {
+          if (commands[currentIndex][ZERO] === 'hgetall') {
+            if (!validateSample(indRes[ONE])) {
+              acc.push(['del', sampleStream[currentIndex]]);
+              acc.push(['srem', samsto.key.samples, sampleStream[currentIndex]]);
+              deletedSample.push(sampleStream[currentIndex]);
+            }
+          }
+
+          return acc;
+        }, [])
+      )
+      .then((_commands) => redis.multi(_commands).exec());
     });
 
     stream.on('end', () => {

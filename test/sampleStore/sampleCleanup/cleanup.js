@@ -62,7 +62,8 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
       'samsto:sample:c|aspect',
       'samsto:sample:d|aspect',
       'samsto:sample:e|aspect',
-      'samsto:sample:f|aspect')
+      'samsto:sample:f|aspect',
+      'samsto:sample:h|aspect')
     .hmset('samsto:sample:a|aspect', sample1)
     .hmset('samsto:sample:b|aspect', sample2)
     .hmset('samsto:sample:c|aspect', sample3)
@@ -74,7 +75,7 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
     .then(() => done());
   });
 
-  it.only('ok - cleanup samplestore', (done) => {
+  it('ok - cleanup samplestore', (done) => {
     sampleCleanup(redis)
     .then(() => Promise.all([
       redis.smembers('samsto:samples'),
