@@ -16,6 +16,7 @@ module.exports = {
   key: {
     aspects: 'samsto:aspects',
     subjects: 'samsto:subjects',
+    samples: 'samsto:samples',
   },
   pfx: {
     aspect: 'samsto:aspect:',
