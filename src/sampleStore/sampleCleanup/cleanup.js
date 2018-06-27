@@ -33,10 +33,10 @@ let deletedSample = [];
  * Validate sample
  *
  * @params {String} sample sample name
- * @throws an error if sample validation is failed
+ * @boolean Return whether sample is valid or not
  */
 function validateSample(sample) {
-  if (!sample.name || sample.name.indexOf('|') < 0) {
+  if (!sample.name || sample.name.indexOf('|') < 1) {
     return false;
   }
 
@@ -59,18 +59,18 @@ module.exports = (redis) => new Promise((resolve, reject) => {
   .then((s) => {
     samples = s;
     debug('Check for all samples that are present in redis or not');
-    let commands = s.map(sample => ['exists', sample]);
+    const commands = s.map(sample => ['exists', sample]);
 
     redis.multi(commands).exec()
     .then((res) => {
-      commands = s.reduce((acc, sample, currentIndex) => {
+      const _commands = s.reduce((acc, sample, currentIndex) => {
         if (!res[currentIndex][ONE]) acc.push(['srem', samsto.key.samples, sample]);
         return acc;
       }, []);
 
-      redis.multi(commands).exec()
+      redis.multi(_commands).exec()
       .then((_res) => {
-        commands.map((sampleDel, currentIndex) => {
+        _commands.map((sampleDel, currentIndex) => {
           if (_res[currentIndex][ONE])
             debug('Removing %s sample from master list samsto:samples', sampleDel[TWO]);
         });

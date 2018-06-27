@@ -54,6 +54,12 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
     aspectId: '123',
   };
 
+  const sample8 = {
+    name: '|aspect',
+    subjectId: '123',
+    aspectId: '123',
+  };
+
   before((done) => {
     redis.pipeline()
     .sadd('samsto:samples',
@@ -71,6 +77,7 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
     .hmset('samsto:sample:e|aspect', sample5)
     .hmset('samsto:sample:f|aspect', sample6)
     .hmset('samsto:sample:g|aspect', sample7)
+    .hmset('samsto:sample:g|aspect', sample8)
     .exec()
     .then(() => done());
   });
