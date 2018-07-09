@@ -18,6 +18,7 @@
  * Uses the ioredis streaming interface for the redis SCAN command
  * (https://github.com/luin/ioredis#streamify-scanning).
  */
+
 'use strict';
 const debug = require('debug')
   ('refocus-utilities:sample-store-cleanup');
@@ -28,63 +29,55 @@ const TWO = 2;
 const ZERO = 0;
 let samples = [];
 let deletedSample = [];
+let deletedSampleFromMasterList = [];
 
-module.exports = (redis) => new Promise((resolve, reject) => {
-  debug('Get Master samples list');
-  return redis.smembers(samsto.key.samples)
+module.exports = (redis) => new Promise((resolve, reject) =>
+  redis.smembers(samsto.key.samples)
   .then((s) => {
     samples = s;
     debug('Check for all samples that are present in redis or not');
     const commands = s.map(sample => ['exists', sample]);
 
     redis.multi(commands).exec()
-    .then((res) => {
-      const _commands = s.reduce((acc, sample, currentIndex) => {
-        if (!res[currentIndex][ONE]) acc.push(['srem', samsto.key.samples, sample]);
-        return acc;
-      }, []);
-
-      redis.multi(_commands).exec()
-      .then((_res) => {
-        _commands.map((sampleDel, currentIndex) => {
-          if (_res[currentIndex][ONE])
-            debug('Removing %s sample from master list samsto:samples', sampleDel[TWO]);
-        });
-      });
-    });
+    .then((res) =>
+      res.map((sample, currentIndex) => {
+        if (!res[currentIndex][ONE]) deletedSampleFromMasterList.push(sample);
+      })
+    );
   })
   .then(() => {
     debug('Scanning for "samsto:sample:*"');
     const stream = redis.scanStream({ match: 'samsto:sample:*' });
 
     stream.on('data', (sampleStream) => {
-      const commands = sampleStream.map((sample) => {
-        if (samples.includes(sample)) return ['hgetall', sample];
-        deletedSample.push(sample);
-        return ['del', sample];
-      });
+      const commands = sampleStream.reduce((acc, indRes, currentIndex) => {
+        if (samples.includes(sampleStream[currentIndex]))
+          acc.push(['hgetall', sampleStream[currentIndex]]);
+        else
+          deletedSample.push(sampleStream[currentIndex]);
+        return acc;
+      }, []);
 
       redis.multi(commands).exec()
       .then((res) =>
         res.reduce((acc, indRes, currentIndex) => {
-          if (commands[currentIndex][ZERO] === 'hgetall') {
-            if (!validateSample(indRes[ONE])) {
-              acc.push(['del', sampleStream[currentIndex]]);
-              acc.push(['srem', samsto.key.samples, sampleStream[currentIndex]]);
-              deletedSample.push(sampleStream[currentIndex]);
-            }
+          if (!validateSample(indRes[ONE])) {
+            deletedSampleFromMasterList.push(commands[currentIndex][ONE]);
+            deletedSample.push(commands[currentIndex][ONE]);
           }
 
           return acc;
         }, [])
-      )
-      .then((_commands) => redis.multi(_commands).exec());
+      );
     });
 
     stream.on('end', () => {
       debug('End of scanning data');
-      debug('Removed samples list: %o', deletedSample);
+      console.log('============= Samples which will be deleted ============');
+      console.log(Array.from(new Set(deletedSample)));
+      console.log('=== Sample keys which will be deleted from master list ===');
+      console.log(deletedSampleFromMasterList);
       return resolve();
     });
-  });
-});
+  })
+);

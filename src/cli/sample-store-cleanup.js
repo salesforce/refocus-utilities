@@ -28,6 +28,11 @@ const optionDefinitions = [
     type: String,
   },
   {
+    name: 'preview',
+    alias: 'p',
+    description: 'Preview samples which will be deleted',
+  },
+  {
     name: 'help',
     alias: 'h',
     description: 'Print this usage guide',

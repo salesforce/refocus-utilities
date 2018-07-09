@@ -25,6 +25,7 @@ const commandLineArgs = require('command-line-args');
 const Redis = require('ioredis');
 const cli = require('./src/cli/sample-store-cleanup');
 const sampleCleanup = require('./src/sampleStore/sampleCleanup/cleanup');
+const previewSampleCleanup = require('./src/sampleStore/sampleCleanup/previewCleanup');
 const startTime = new Date();
 const options = commandLineArgs(cli.optionDefinitions);
 const localRedis = 'redis://localhost:6379';
@@ -35,12 +36,28 @@ const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
 
-sampleCleanup(redis)
-.then(() => {
-  console.log('Success! [%dms]', new Date() - startTime);
-  process.exit(0);
-})
-.catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
+
+console.log(options.preview);
+
+if (options.hasOwnProperty('preview')) {
+  previewSampleCleanup(redis)
+  .then(() => {
+    console.log('Success! [%dms]', new Date() - startTime);
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+} else {
+  sampleCleanup(redis)
+  .then(() => {
+    console.log('Success! [%dms]', new Date() - startTime);
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}
+

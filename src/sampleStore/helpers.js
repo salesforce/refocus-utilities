@@ -37,4 +37,32 @@ module.exports = {
     const rex = RegExp('^' + toRemove);
     return arr.map((i) => typeof i === 'string' ? i.replace(rex, toAdd) : i);
   },
+
+  /**
+   * Performs some basic validation of the sample:
+   * (1) has name which contains valid characters, with valid number of
+   *     characters before and after the pipe
+   * (2) has aspectId which looks like postgres uuid
+   * (3) has subjectId which looks like postgres uuid
+   *
+   * @params {String} sample - The sample to validate
+   * @returns {Boolean} true if sample is valid
+   */
+  validateSample: (sample) => {
+    if (!sample.name || sample.name.indexOf('|') < 1) {
+      return false;
+    }
+
+    // check subject ID
+    if (!sample.subjectId) {
+      return false;
+    }
+
+    // check aspect ID
+    if (!sample.aspectId) {
+      return false;
+    }
+
+    return true;
+  },
 };
