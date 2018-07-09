@@ -31,21 +31,25 @@ let samples = [];
 let deletedSample = [];
 let deletedSampleFromMasterList = [];
 
-module.exports = (redis) => new Promise((resolve, reject) =>
+module.exports = (redis) => new Promise((resolve, reject) => {
+  debug('Get Master samples list');
   redis.smembers(samsto.key.samples)
   .then((s) => {
     samples = s;
     debug('Check for all samples that are present in redis or not');
     const commands = s.map(sample => ['exists', sample]);
 
+    console.log(commands);
     redis.multi(commands).exec()
     .then((res) =>
       res.map((sample, currentIndex) => {
-        if (!res[currentIndex][ONE]) deletedSampleFromMasterList.push(sample);
+        if (!res[currentIndex][ONE])
+          deletedSampleFromMasterList.push(commands[currentIndex][ONE]);
       })
     );
   })
   .then(() => {
+    console.log(deletedSampleFromMasterList);
     debug('Scanning for "samsto:sample:*"');
     const stream = redis.scanStream({ match: 'samsto:sample:*' });
 
@@ -84,5 +88,5 @@ module.exports = (redis) => new Promise((resolve, reject) =>
       });
       return resolve();
     });
-  })
-);
+  });
+});
