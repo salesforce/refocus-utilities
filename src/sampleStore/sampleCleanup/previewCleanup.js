@@ -73,10 +73,15 @@ module.exports = (redis) => new Promise((resolve, reject) =>
 
     stream.on('end', () => {
       debug('End of scanning data');
-      console.log('============= Samples which will be deleted ============');
-      console.log(Array.from(new Set(deletedSample)));
+      console.log('============== Samples which will be deleted =============');
+
+      Array.from(new Set(deletedSample)).map((sample) => {
+        console.log(sample);
+      });
       console.log('=== Sample keys which will be deleted from master list ===');
-      console.log(deletedSampleFromMasterList);
+      deletedSampleFromMasterList.map((sample) => {
+        console.log(sample);
+      });
       return resolve();
     });
   })
