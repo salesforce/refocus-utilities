@@ -39,7 +39,6 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     debug('Check for all samples that are present in redis or not');
     const commands = s.map(sample => ['exists', sample]);
 
-    console.log(commands);
     redis.multi(commands).exec()
     .then((res) =>
       res.map((sample, currentIndex) => {
@@ -49,7 +48,6 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     );
   })
   .then(() => {
-    console.log(deletedSampleFromMasterList);
     debug('Scanning for "samsto:sample:*"');
     const stream = redis.scanStream({ match: 'samsto:sample:*' });
 
