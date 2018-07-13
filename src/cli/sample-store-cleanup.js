@@ -30,7 +30,7 @@ const optionDefinitions = [
   {
     name: 'preview',
     alias: 'p',
-    description: 'Preview samples which will be deleted',
+    description: 'Preview samples which would be deleted',
   },
   {
     name: 'help',

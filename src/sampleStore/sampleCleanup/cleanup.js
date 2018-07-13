@@ -7,7 +7,7 @@
  */
 
 /**
- * src/sampleStore/aspectSubjectMap/delete.js
+ * src/sampleStore/sampleCleanup/cleanup.js
  *
  * Clean up sample store
  * - Check for all samples that are present in redis or not which are in master list
@@ -19,8 +19,7 @@
  * (https://github.com/luin/ioredis#streamify-scanning).
  */
 'use strict';
-const debug = require('debug')
-  ('refocus-utilities:sample-store-cleanup');
+const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
 const validateSample = require('../helpers').validateSample;
 const ONE = 1;
@@ -34,9 +33,11 @@ module.exports = (redis) => new Promise((resolve, reject) => {
   return redis.smembers(samsto.key.samples)
   .then((s) => {
     samples = s;
-    debug('Check for all samples that are present in redis or not');
+    debug('Checking whether each member of the set has a corresponding ' +
+      `"${samsto.pfx.sample}[SAMPLE_NAME]" hash`);
     const commands = s.map(sample => ['exists', sample]);
 
+    // TODO unnest these nested promises
     redis.multi(commands).exec()
     .then((res) => {
       const _commands = s.reduce((acc, sample, currentIndex) => {
@@ -54,8 +55,8 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     });
   })
   .then(() => {
-    debug('Scanning for "samsto:sample:*"');
-    const stream = redis.scanStream({ match: 'samsto:sample:*' });
+    debug(`Scanning for "${samsto.pfx.sample}*" keys...`);
+    const stream = redis.scanStream({ match: `${samsto.pfx.sample}*` });
 
     stream.on('data', (sampleStream) => {
       const commands = sampleStream.map((sample) => {
@@ -82,8 +83,12 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     });
 
     stream.on('end', () => {
-      debug('End of scanning data');
-      debug('Removed samples list: %o', deletedSample);
+      debug(`Completed scan for "${samsto.pfx.sample}*" keys`);
+      console.log('===================== Deleted Samples ====================');
+      Array.from(new Set(deletedSample)).map(console.log);
+
+      // TODO print out the sample keys which were deleted from master list
+      //      just like we do in preview
       return resolve();
     });
   });

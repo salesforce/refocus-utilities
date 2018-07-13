@@ -35,8 +35,6 @@ cli.showUsage(options);
 const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
-
-
 console.log(options.preview);
 
 if (options.hasOwnProperty('preview')) {
@@ -60,4 +58,3 @@ if (options.hasOwnProperty('preview')) {
     process.exit(1);
   });
 }
-
