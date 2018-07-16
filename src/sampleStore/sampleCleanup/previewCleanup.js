@@ -7,21 +7,20 @@
  */
 
 /**
- * src/sampleStore/aspectSubjectMap/delete.js
+ * src/sampleStore/sampleCleanup/previewCleanup.js
  *
- * Clean up sample store
- * - Check for all samples that are present in redis or not which are in master list
- * - Delete keys for samples which are not in the master list
- * - Validate each sample i.e aspectId, subjectId, name and if it failed to
- *   validate then remove that sample key as well as from master list of samples.
+ * Preview mode - does not delete anything!
+ * - List all the samples in the "samsto:samples" set which don't have a
+ *   corresponding "samsto:sample:[SAMPLE_NAME]" hash.
+ * - List all the invalid samples, i.e. any "samsto:sample:[SAMPLE_NAME]" hash
+ *   which is missing an aspectId or subjectId, or whose name doesn't look like
+ *   a sample name.
  *
  * Uses the ioredis streaming interface for the redis SCAN command
  * (https://github.com/luin/ioredis#streamify-scanning).
  */
-
 'use strict';
-const debug = require('debug')
-  ('refocus-utilities:sample-store-cleanup');
+const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
 const validateSample = require('../helpers').validateSample;
 const ONE = 1;
@@ -32,13 +31,15 @@ let deletedSample = [];
 let deletedSampleFromMasterList = [];
 
 module.exports = (redis) => new Promise((resolve, reject) => {
-  debug('Get Master samples list');
+  debug(`Getting members of "${samsto.key.samples}" set...`);
   redis.smembers(samsto.key.samples)
-  .then((s) => {
-    samples = s;
-    debug('Check for all samples that are present in redis or not');
-    const commands = s.map(sample => ['exists', sample]);
+  .then((members) => {
+    samples = members;
+    debug('Checking whether each member of the set has a corresponding ' +
+      `"${samsto.pfx.sample}[SAMPLE_NAME]" hash`);
+    const commands = members.map(sample => ['exists', sample]);
 
+    // TODO unnest nested promise
     redis.multi(commands).exec()
     .then((res) =>
       res.map((sample, currentIndex) => {
@@ -48,8 +49,8 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     );
   })
   .then(() => {
-    debug('Scanning for "samsto:sample:*"');
-    const stream = redis.scanStream({ match: 'samsto:sample:*' });
+    debug(`Scanning for "${samsto.pfx.sample}*" keys...`);
+    const stream = redis.scanStream({ match: `${samsto.pfx.sample}*` });
 
     stream.on('data', (sampleStream) => {
       const commands = sampleStream.reduce((acc, indRes, currentIndex) => {
@@ -74,16 +75,11 @@ module.exports = (redis) => new Promise((resolve, reject) => {
     });
 
     stream.on('end', () => {
-      debug('End of scanning data');
-      console.log('============== Samples which will be deleted =============');
-
-      Array.from(new Set(deletedSample)).map((sample) => {
-        console.log(sample);
-      });
-      console.log('=== Sample keys which will be deleted from master list ===');
-      deletedSampleFromMasterList.map((sample) => {
-        console.log(sample);
-      });
+      debug(`Completed scan for "${samsto.pfx.sample}*" keys`);
+      console.log('============== Samples which would be deleted =============');
+      Array.from(new Set(deletedSample)).map(console.log);
+      console.log('=== Sample keys which would be deleted from master list ===');
+      deletedSampleFromMasterList.map(console.log);
       return resolve();
     });
   });

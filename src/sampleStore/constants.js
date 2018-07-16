@@ -21,6 +21,7 @@ module.exports = {
   pfx: {
     aspect: 'samsto:aspect:',
     asm: 'samsto:aspsubmap:',
+    sample: 'samsto:sample:',
     subject: 'samsto:subject:',
     subjects: 'samsto:subjects:',
     sam: 'samsto:subaspmap:',
