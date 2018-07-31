@@ -1,6 +1,6 @@
 {
-  "name": "refocus-utilities",
-  "version": "1.0.0",
+  "name": "@salesforce/refocus-utilities",
+  "version": "1.1.0",
   "description": "Refocus utilities",
   "main": "index.js",
   "directories": {
