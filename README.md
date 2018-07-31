@@ -4,7 +4,7 @@
 
 ## Installation
 
-`npm install refocus-utilities`
+`npm install @salesforce/refocus-utilities`
 
 ## Commands
 

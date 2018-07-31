@@ -1,5 +1,5 @@
 {
-  "name": "refocus-utilities",
+  "name": "@salesforce/refocus-utilities",
   "version": "1.0.0",
   "description": "Refocus utilities",
   "main": "index.js",
