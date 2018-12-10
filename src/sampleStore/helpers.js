@@ -12,6 +12,9 @@
  * Helper functions.
  */
 'use strict';
+const constants = require('./constants');
+const samplePrefixLength = constants.pfx.sample.length;
+
 module.exports = {
   /**
    * Replaces pfxToRemove with pfxToAdd in each string element of the array.
@@ -65,4 +68,16 @@ module.exports = {
 
     return true;
   },
+
+  /**
+   * Returns true if the key matches the name. Expects key to always be lower-
+   * case AND start with "samsto:sample:" so we ignore those first 14 characters
+   * then do a lower case string comparison.
+   *
+	 * @param {String} key - the redis sample store's sample key
+	 * @param {String} name - the sample's name attribute
+	 * @returns {boolean}
+	 */
+  sampleKeyNameMatch: (key, name) =>
+    key.slice(samplePrefixLength) === name.toLowerCase(),
 };

@@ -22,7 +22,7 @@
 'use strict';
 const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
-const validateSample = require('../helpers').validateSample;
+const helpers = require('../helpers');
 const ONE = 1;
 const TWO = 2;
 const ZERO = 0;
@@ -64,7 +64,9 @@ module.exports = (redis) => new Promise((resolve, reject) => {
       redis.multi(commands).exec()
       .then((res) =>
         res.reduce((acc, indRes, currentIndex) => {
-          if (!validateSample(indRes[ONE])) {
+          const key = sampleStream[currentIndex];
+          if (!helpers.validateSample(indRes[ONE]) ||
+            !helpers.sampleKeyNameMatch(key, indRes[ONE].name)) {
             deletedSampleFromMasterList.push(commands[currentIndex][ONE]);
             deletedSample.push(commands[currentIndex][ONE]);
           }

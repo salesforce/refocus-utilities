@@ -11,6 +11,7 @@
  */
 const expect = require('chai').expect;
 const helpers = require('../../src/sampleStore/helpers');
+const constants = require('../../src/sampleStore/constants');
 
 describe('test/sampleStore/helpers.js >', () => {
   describe('replacePrefix >', () => {
@@ -18,7 +19,7 @@ describe('test/sampleStore/helpers.js >', () => {
 
     it('ok - remove nothing, add something', () => {
       expect(helpers.replacePrefix(arr, '', 'x'))
-      .to.deep.equal([
+        .to.deep.equal([
         'xblue',
         'xred',
         'xyellow',
@@ -32,7 +33,7 @@ describe('test/sampleStore/helpers.js >', () => {
 
     it('ok - remove something, add nothing', () => {
       expect(helpers.replacePrefix(arr, 'yell', ''))
-      .to.deep.equal([
+        .to.deep.equal([
         'blue',
         'red',
         'ow',
@@ -46,7 +47,7 @@ describe('test/sampleStore/helpers.js >', () => {
 
     it('ok - remove something, add something', () => {
       expect(helpers.replacePrefix(arr, 'r', 'belov'))
-      .to.deep.equal([
+        .to.deep.equal([
         'blue',
         'beloved',
         'yellow',
@@ -70,6 +71,26 @@ describe('test/sampleStore/helpers.js >', () => {
       expect(helpers.replacePrefix(arr, null, '')).to.deep.equal(arr);
       expect(helpers.replacePrefix(arr, undefined, '')).to.deep.equal(arr);
       expect(helpers.replacePrefix(arr, 14, '')).to.deep.equal(arr);
+    });
+  });
+
+  describe('sampleKeyNameMatch >', () => {
+    it('OK', () => {
+      const res =
+        helpers.sampleKeyNameMatch(constants.pfx.sample + 'a.b.c|foo', 'A.B.C|foo');
+      expect(res).to.be.true;
+    });
+
+    it('bad prefix', () => {
+      const res =
+        helpers.sampleKeyNameMatch('sam:sample:a.b.c|foo', 'A.B.C|foo');
+      expect(res).to.be.false;
+    });
+
+    it('name mismatch', () => {
+      const res =
+        helpers.sampleKeyNameMatch(constants.pfx.sample + 'a.b.c|foo', 'A.B|foo');
+      expect(res).to.be.false;
     });
   });
 });
