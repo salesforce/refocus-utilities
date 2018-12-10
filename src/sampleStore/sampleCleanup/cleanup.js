@@ -14,6 +14,8 @@
  * - Delete keys for samples which are not in the master list
  * - Validate each sample i.e aspectId, subjectId, name and if it failed to
  *   validate then remove that sample key as well as from master list of samples.
+ * - Validate that each sample's name attribute matches its redis key. On
+ *   mismatch, remove that sample key as well as from master list of samples.
  *
  * Uses the ioredis streaming interface for the redis SCAN command
  * (https://github.com/luin/ioredis#streamify-scanning).
@@ -21,7 +23,7 @@
 'use strict';
 const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
-const validateSample = require('../helpers').validateSample;
+const helpers = require('../helpers');
 const ONE = 1;
 const TWO = 2;
 const ZERO = 0;
@@ -69,7 +71,9 @@ module.exports = (redis) => new Promise((resolve, reject) => {
       .then((res) =>
         res.reduce((acc, indRes, currentIndex) => {
           if (commands[currentIndex][ZERO] === 'hgetall') {
-            if (!validateSample(indRes[ONE])) {
+            const key = sampleStream[currentIndex];
+            if (!helpers.validateSample(indRes[ONE]) ||
+              !helpers.sampleKeyNameMatch(key, indRes[ONE].name)) {
               acc.push(['del', sampleStream[currentIndex]]);
               acc.push(['srem', samsto.key.samples, sampleStream[currentIndex]]);
               deletedSample.push(sampleStream[currentIndex]);
