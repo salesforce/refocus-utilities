@@ -21,20 +21,31 @@ const redis = new Redis(redisUrl);
 
 return redis.smembers(samsto.key.samples)
 .then((sampleNames) => {
-  // console.log(sampleNames);
   const commands = sampleNames.map(sample => ['hgetall', sample]);
   return redis.multi(commands).exec();
 })
 .then((samples) => {
+  const updateCmds = [];
   samples.forEach((samp) => {
     const sample = samp[1];
-      // console.log(sample);
     if (sample && sample.relatedLinks) {
       if (sample.relatedLinks == 'null' || sample.relatedLinks == 'undefined') {
-        console.log(sample);
+        console.log(sample.relatedLinks);
+        updateCmds.push(['hset', `samsto:sample:${sample.name.toLowerCase()}`, 'relatedLinks', '[]']);
       }
     }
   })
-  console.log("Done...");
+  console.log("starting updates...", updateCmds.length);
+  return redis.multi(updateCmds).exec();
+})
+.then((updatedSamples) => {
+  console.log("Done updates...", updatedSamples.length);
+  updatedSamples.forEach((res) => {
+    if (res[1] !== 0) {
+      console.log("Returned value: ", res[1]);
+    }
+  })
+
+  console.log("Done....");
   return Promise.resolve();
 })
