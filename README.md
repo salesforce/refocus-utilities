@@ -19,6 +19,7 @@ command option `--redisUrl` (or shortcut `-r`).
 
 Use `--preview` (or `-p`) to run in preview mode, to see what keys would be deleted before actually running the cleanup utility for real.
 
+```
 Synopsis
 
   $ node sample-store-cleanup --preview
@@ -30,6 +31,7 @@ Options
 
   -r, --redisUrl string   The redis connection url (defaults to `process.env.REDIS_URL` or `redis://localhost:6379`).
   -h, --help              Print this usage guide
+```
 
 ### sample-store-rebuild-aspect-subject-map
 
@@ -41,6 +43,7 @@ The redis connection url defaults to local redis instance
 will use that instead. Alternatively, you can pass a redis connection url using
 command option `--redisUrl` (or shortcut `-r`).
 
+```
 Synopsis
 
   $ node sample-store-rebuild-aspect-subject-map
@@ -52,4 +55,4 @@ Options
 
   -r, --redisUrl string   The redis connection url (defaults to `process.env.REDIS_URL` or `redis://localhost:6379`).
   -h, --help              Print this usage guide
-  
+```
