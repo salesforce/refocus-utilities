@@ -29,71 +29,133 @@ const TWO = 2;
 const ZERO = 0;
 let samples = [];
 let deletedSample = [];
+let deletedSampleFromMasterList = [];
 
 module.exports = (redis) => new Promise((resolve, reject) => {
   debug('Get Master samples list');
+  let existsCommands;
   return redis.smembers(samsto.key.samples)
-  .then((s) => {
-    samples = s;
-    debug('Checking whether each member of the set has a corresponding ' +
-      `"${samsto.pfx.sample}[SAMPLE_NAME]" hash`);
-    const commands = s.map(sample => ['exists', sample]);
-
-    // TODO unnest these nested promises
-    redis.multi(commands).exec()
+    .then((s) => {
+      samples = s;
+      debug('Checking whether each member of the set has a corresponding ' +
+        `"${samsto.pfx.sample}[SAMPLE_NAME]" hash`);
+      existsCommands = s.map(sample => ['exists', sample]);
+      return redis.multi(existsCommands).exec();
+    })
     .then((res) => {
-      const _commands = s.reduce((acc, sample, currentIndex) => {
-        if (!res[currentIndex][ONE]) acc.push(['srem', samsto.key.samples, sample]);
-        return acc;
-      }, []);
-
-      redis.multi(_commands).exec()
-      .then((_res) => {
-        _commands.map((sampleDel, currentIndex) => {
-          if (_res[currentIndex][ONE])
-            debug('Removing %s sample from master list samsto:samples', sampleDel[TWO]);
-        });
-      });
-    });
-  })
-  .then(() => {
-    debug(`Scanning for "${samsto.pfx.sample}*" keys...`);
-    const stream = redis.scanStream({ match: `${samsto.pfx.sample}*` });
-
-    stream.on('data', (sampleStream) => {
-      const commands = sampleStream.map((sample) => {
-        if (samples.includes(sample)) return ['hgetall', sample];
-        deletedSample.push(sample);
-        return ['del', sample];
+      res.map((resEntry, currIdx) => {
+        if (!res[currIdx][ONE]) { // if does not exists
+          const sampleKey = existsCommands[currIdx][ONE];
+          deletedSampleFromMasterList.push(sampleKey);
+          debug('Removing %s sample from master list samsto:samples. ' +
+            'Reason: No hash.', sampleKey);
+        }
       });
 
-      redis.multi(commands).exec()
-      .then((res) =>
-        res.reduce((acc, indRes, currentIndex) => {
-          if (commands[currentIndex][ZERO] === 'hgetall') {
-            const key = sampleStream[currentIndex];
-            if (!helpers.validateSample(indRes[ONE]) ||
-              !helpers.sampleKeyNameMatch(key, indRes[ONE].name)) {
-              acc.push(['del', sampleStream[currentIndex]]);
-              acc.push(['srem', samsto.key.samples, sampleStream[currentIndex]]);
-              deletedSample.push(sampleStream[currentIndex]);
-            }
+      debug(`Scanning for "${samsto.pfx.sample}*" keys...`);
+      const stream = redis.scanStream({ match: `${samsto.pfx.sample}*` });
+
+      stream.on('data', (sampleStream) => {
+        const subjaspCommands = [];
+        const validSampleKeys = [];
+        /**
+         * If subject or aspect names from sample does not exist in sample store,
+         * then add the sample to the delete list.
+         */
+        sampleStream.map((sampleKey) => {
+          const sampName = helpers.getNameFromKey(sampleKey);
+          const aspSubjName = sampName.split('|');
+          const subjName = aspSubjName[0];
+          const aspName = aspSubjName[1];
+
+          if (aspSubjName.length === 2) {
+            subjaspCommands.push(['exists', `samsto:subject:${subjName}`]);
+            subjaspCommands.push(['exists', `samsto:aspect:${aspName}`]);
+            validSampleKeys.push(sampleKey);
+          } else { // invalid sample key
+            deletedSampleFromMasterList.push(sampleKey);
+            deletedSample.push(sampleKey);
+            debug('Removing %s sample hash and entry from master list. ' +
+              'Reason: Invalid sample key', sampleKey);
           }
+        });
 
-          return acc;
-        }, [])
-      )
-      .then((_commands) => redis.multi(_commands).exec());
-    });
+        const getHashCommands = [];
+        const filteredSampleKeys = [];
+        return redis.multi(subjaspCommands).exec()
+          .then((res) => {
+            /**
+             * ith sample in sampleStream corresponds to:
+             * 2*i index for subject in subjaspCommands
+             * (2*i) + 1 index for aspect in subjaspCommands
+             *
+             * Sample key is valid only if we get positive result for subject
+             * and aspect key existence in sample store
+             */
 
-    stream.on('end', () => {
-      debug(`Completed scan for "${samsto.pfx.sample}*" keys`);
-      console.log('===================== Deleted Samples ====================');
-      Array.from(new Set(deletedSample)).map(console.log);
+            validSampleKeys.map((sampleKey, sampleIdx) => {
+              const subjIdx = 2 * sampleIdx;
+              const aspIdx = (2 * sampleIdx) + 1;
+              if (!res[subjIdx][ONE] || !res[aspIdx][ONE]) { // asp/subj hash not present
+                deletedSampleFromMasterList.push(sampleKey);
+                deletedSample.push(sampleKey);
+                debug('Removing %s sample hash and entry from master list. ' +
+                  'Reason: Subject or Aspect not present.', sampleKey);
+              } else {
+                if (samples.includes(sampleKey)) {
+                  getHashCommands.push(['hgetall', sampleKey]);
+                  filteredSampleKeys.push(sampleKey);
+                } else {
+                  deletedSample.push(sampleKey);
+                  debug('Removing %s sample hash. Reason: Sample not present ' +
+                    'in master list.', sampleKey);
+                }
+              }
+            });
 
-      // TODO print out the sample keys which were deleted from master list
-      //      just like we do in preview
-      return resolve();
-    });
-  });
+            return redis.multi(getHashCommands).exec()
+          })
+          .then((res) => {
+            res.map((resEntry, currIdx) => {
+              const sampleKey = filteredSampleKeys[currIdx];
+
+              if (!helpers.validateSample(resEntry[ONE]) ||
+                !helpers.sampleKeyNameMatch(sampleKey, resEntry[ONE].name)) {
+                deletedSampleFromMasterList.push(filteredSampleKeys[currIdx]);
+                deletedSample.push(filteredSampleKeys[currIdx]);
+
+                debug('Removing %s sample hash and entry from master list. ' +
+                  'Reason: Invalid sample.', filteredSampleKeys[currIdx]);
+              }
+            });
+
+            // delete samples from master list and corresponding hashes
+            const deleteCommands = [];
+            deletedSampleFromMasterList.forEach((sampleKey) => {
+              deleteCommands.push(['srem', samsto.key.samples, sampleKey]);
+            });
+
+            deletedSample.forEach((sampleKey) => {
+              deleteCommands.push(['del', sampleKey]);
+            });
+
+            return redis.multi(deleteCommands).exec()
+          })
+      });
+
+      stream.on('end', () => {
+        debug(`Completed scan for "${samsto.pfx.sample}*" keys`);
+        console.log('===================== Deleted Samples ====================');
+        console.log([...new Set(deletedSample)]);
+
+        console.log('=== Sample keys which would be deleted from master list ===');
+        console.log([...new Set(deletedSampleFromMasterList)]);
+
+        return resolve();
+      });
+    })
+    .catch((err) => {
+      debug(`Got error: %o`, err);
+      console.log('Got error', err);
+    })
 });

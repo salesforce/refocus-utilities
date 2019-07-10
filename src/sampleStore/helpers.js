@@ -14,6 +14,7 @@
 'use strict';
 const constants = require('./constants');
 const samplePrefixLength = constants.pfx.sample.length;
+const SEP = ':';
 
 module.exports = {
   /**
@@ -80,4 +81,14 @@ module.exports = {
 	 */
   sampleKeyNameMatch: (key, name) =>
     key.slice(samplePrefixLength) === name.toLowerCase(),
+
+  /**
+   * Get object name from key.
+   * @param  {String} key - Key name
+   * @returns {String} - Object name
+   */
+  getNameFromKey(key) {
+    const splitArr = key.split(SEP);
+    return splitArr[splitArr.length - 1];
+  }, // getNameFromKey
 };
