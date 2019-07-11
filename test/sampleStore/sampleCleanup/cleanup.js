@@ -15,20 +15,60 @@ const Redis = require('ioredis-mock');
 const redis = new Redis();
 
 describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
+  const subject1 = {
+    name: 'subj1',
+    absolutePath: 'subj2',
+    isPublished: true,
+  };
+
+  const subject2 = {
+    name: 'subj2',
+    absolutePath: 'subj2',
+    isPublished: true,
+  };
+
+  const subject3 = {
+    name: 'subj3',
+    absolutePath: 'subj3',
+    isPublished: true,
+  };
+
+  const subject4 = {
+    name: 'subj4',
+    absolutePath: 'subj4',
+    isPublished: true,
+  };
+
+  const subject5 = {
+    name: 'subj5',
+    absolutePath: 'subj5',
+    isPublished: true,
+  };
+
+  const aspect1 = {
+    name: 'asp1',
+    isPublished: true,
+  };
+
+  const aspect2 = {
+    name: 'asp2',
+    isPublished: true,
+  };
+
   const sample1 = {
-    name: 'a|aspect',
+    name: 'subj1|asp1',
     subjectId: '123',
     aspectId: '123',
   };
 
   const sample2 = {
-    name: 'b|aspect',
+    name: 'subj2|asp2',
     subjectId: '123',
     aspectId: '123',
   };
 
   const sample3 = {
-    name: 'c|aspect',
+    name: 'subj3|asp1',
     aspectId: '123',
   };
 
@@ -38,46 +78,57 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
   };
 
   const sample5 = {
-    name: 'e|aspect',
+    name: 'subj2|asp1',
     subjectId: '123',
   };
 
   const sample6 = {
-    name: 'f',
+    name: 'subj3',
     subjectId: '123',
     aspectId: '123',
   };
 
   const sample7 = {
-    name: 'g|aspect',
+    name: 'subj3|asp1',
     subjectId: '123',
     aspectId: '123',
   };
 
   const sample8 = {
-    name: '|aspect',
+    name: '|asp2',
     subjectId: '123',
     aspectId: '123',
   };
 
   before((done) => {
     redis.pipeline()
-    .sadd('samsto:samples',
-      'samsto:sample:a|aspect',
-      'samsto:sample:b|aspect',
-      'samsto:sample:c|aspect',
-      'samsto:sample:d|aspect',
-      'samsto:sample:e|aspect',
-      'samsto:sample:f|aspect',
-      'samsto:sample:h|aspect')
-    .hmset('samsto:sample:a|aspect', sample1)
-    .hmset('samsto:sample:b|aspect', sample2)
-    .hmset('samsto:sample:c|aspect', sample3)
-    .hmset('samsto:sample:d|aspect', sample4)
-    .hmset('samsto:sample:e|aspect', sample5)
-    .hmset('samsto:sample:f|aspect', sample6)
-    .hmset('samsto:sample:g|aspect', sample7)
-    .hmset('samsto:sample:h|aspect', sample8)
+      .sadd('samsto:samples',
+        'samsto:sample:subj1|asp1',
+        'samsto:sample:subj1|asp2', // invalid name in hash
+        'samsto:sample:subj2|asp1', // no hash
+        'samsto:sample:subj2|asp2',
+        'samsto:sample:subj1|aspNoHash', // asp absent
+        'samsto:sample:subj3|asp2', // invalid sample object
+        'samsto:sample:subj4|asp1', // invalid sample object
+        'samsto:sample:subj4|asp2', // invalid sample object
+        'samsto:sample:subj5|asp1', // invalid sample object
+        'samsto:sample:subjNoHash|asp1') // subj absent
+      .hmset('samsto:aspect:asp1', aspect1)
+      .hmset('samsto:aspect:asp2', aspect2)
+      .hmset('samsto:subject:subj1', subject1)
+      .hmset('samsto:subject:subj2', subject2)
+      .hmset('samsto:subject:subj3', subject3)
+      .hmset('samsto:subject:subj4', subject4)
+      .hmset('samsto:subject:subj5', subject5)
+      .hmset('samsto:sample:subj1|asp1', sample1)
+      .hmset('samsto:sample:subj2|asp2', sample2)
+      .hmset('samsto:sample:subjNoHash|asp1', sample3) // subj absent
+      .hmset('samsto:sample:subj1|aspNoHash', sample4) // asp absent
+      .hmset('samsto:sample:subj3|asp1', sample3) // not present in master
+      .hmset('samsto:sample:subj3|asp2', sample5) // invalid sample
+      .hmset('samsto:sample:subj4|asp1', sample6) // invalid sample
+      .hmset('samsto:sample:subj4|asp2', sample7) // invalid sample
+      .hmset('samsto:sample:subj5|asp1', sample8) // invalid sample
     .exec()
     .then(() => done());
   });
@@ -92,10 +143,11 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
       expect(res1).to.deep.equal(['samsto:sample:a|aspect', 'samsto:sample:b|aspect']);
       expect(res2.length).equals(3);
       expect(res2).to.include('samsto:samples');
-      expect(res2).to.include('samsto:sample:a|aspect');
-      expect(res2).to.include('samsto:sample:b|aspect');
+      expect(res2).to.include('samsto:sample:subj1|asp1');
+      expect(res2).to.include('samsto:sample:subj2|asp2');
 
       done();
-    });
+    })
+      .catch(done);
   });
 });
