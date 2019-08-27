@@ -113,22 +113,28 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
   it('ok - aspect tags are added as keys', (done) => {
     aspectAttributesAsKeys(redis, false)
       .then(() => Promise.all([
+
+        // aspect tags keys exists
         redis.exists(`${aspTagsPfx}${aspect1.name}`),
         redis.exists(`${aspTagsPfx}${aspect2.name}`),
         redis.exists(`${aspTagsPfx}${aspUnPub.name}`),
 
+        // checks tags set members
         redis.smembers(`${aspTagsPfx}${aspect1.name}`),
         redis.smembers(`${aspTagsPfx}${aspect2.name}`),
         redis.smembers(`${aspTagsPfx}${aspUnPub.name}`),
 
+        // aspect writers key exists
         redis.exists(`${aspWritersPfx}${aspect1.name}`),
         redis.exists(`${aspWritersPfx}${aspect2.name}`),
         redis.exists(`${aspWritersPfx}${aspUnPub.name}`),
 
+        // check aspect writers set members
         redis.smembers(`${aspWritersPfx}${aspect1.name}`),
         redis.smembers(`${aspWritersPfx}${aspect2.name}`),
         redis.smembers(`${aspWritersPfx}${aspUnPub.name}`),
 
+        // different range cases, check range key exists and check members
         redis.exists(`${aspRangesPfx}${aspect1.name}`),
         redis.zrangebyscore(`${aspRangesPfx}${aspect1.name}`, '-inf', '+inf', 'WITHSCORES'),
 
@@ -148,20 +154,27 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
         redis.zrangebyscore(`${aspRangesPfx}${aspect6.name}`, '-inf', '+inf', 'WITHSCORES'),
       ]))
       .then((res) => {
+        // aspect tags keys exists
         expect(res[0]).to.equal(1);
         expect(res[1]).to.equal(1);
         expect(res[2]).to.equal(0);
+
+        // checks tags set members
         expect(res[3]).to.deep.equal(['onetag']);
         expect(res[4]).to.deep.equal(['aspect', 'published', 'multipleTags']);
         expect(res[5]).to.deep.equal([]);
 
+        // aspect writers key exists
         expect(res[6]).to.equal(1);
         expect(res[7]).to.equal(1);
         expect(res[8]).to.equal(0);
+
+        // check aspect writers set members
         expect(res[9]).to.deep.equal(['user1']);
         expect(res[10]).to.deep.equal(['user1', 'user2', 'user3']);
         expect(res[11]).to.deep.equal([]);
 
+        // basic range: key exists and check members
         expect(res[12]).to.equal(1);
         expect(res[13]).to.deep.equal(
           ['3:min:Critical', '0',
@@ -174,6 +187,8 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
           '3:min:OK', '5',
           ]);
 
+        /* negative int ranges with undefined range in the middle:
+        check key and members */
         expect(res[14]).to.equal(1);
         expect(res[15]).to.deep.equal([
           '0:max:Critical',
@@ -190,6 +205,7 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
           '10',
         ]);
 
+        // null and non-contiguous ranges: check key and members
         expect(res[16]).to.equal(1);
         expect(res[17]).to.deep.equal(['3:min:Critical',
           '0',
@@ -201,6 +217,7 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
           '30',
         ]);
 
+        // ranges touching edges reverse order: check key and members
         expect(res[18]).to.equal(1);
         expect(res[19]).to.deep.equal(['3:min:Info',
           '0',
@@ -216,6 +233,8 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
           '5',
         ]);
 
+        /* touching edges, singular ranges, reverse (lower value has precedence)
+        check key and members */
         expect(res[20]).to.equal(1);
         expect(res[21]).to.deep.equal(['3:min:Critical',
           '0',
@@ -235,6 +254,7 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
           '5',
         ]);
 
+        // decimal ranges: check key and members
         expect(res[22]).to.equal(1);
         expect(res[23]).to.deep.equal(['3:min:Critical',
           '0',

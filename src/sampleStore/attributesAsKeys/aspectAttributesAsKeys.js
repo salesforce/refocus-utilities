@@ -73,7 +73,7 @@ function addRangesCmds(aspect, preview, redisCmds) {
 } // addRangesCmds
 
 function addTagsCmds(aspName, aspect, preview, aspAttrCmds) {
-  if (aspect.tags && !Array.isArray(aspect.tags) && typeof aspect.tags !== 'object') {
+  if (aspect.tags && typeof aspect.tags === 'string') {
     const tags = JSON.parse(aspect.tags);
     if (!Array.isArray(tags)) {
       throw new Error(`Invalid tags values: ${tags}`);
@@ -87,7 +87,7 @@ function addTagsCmds(aspName, aspect, preview, aspAttrCmds) {
 }
 
 function addWritersCmds(aspName, aspect, preview, aspAttrCmds) {
-  if (aspect.writers && !Array.isArray(aspect.writers) && typeof aspect.writers !== 'object') {
+  if (aspect.writers && typeof aspect.writers === 'string') {
     const writers = JSON.parse(aspect.writers);
     if (!Array.isArray(writers)) {
       throw new Error(`Invalid writers values: ${writers}`);

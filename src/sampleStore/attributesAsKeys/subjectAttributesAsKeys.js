@@ -30,8 +30,7 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
         const subject = subjRes[1];
         const subjAbsPath = subject.absolutePath.toLowerCase();
         if (subject.isPublished === 'true') {
-          if (subjAbsPath && subject.tags && !Array.isArray(subject.tags) &&
-            typeof subject.tags !== 'object') {
+          if (subjAbsPath && subject.tags && typeof subject.tags === 'string') {
             const tags = JSON.parse(subject.tags);
             if (!Array.isArray(tags)) {
               throw new Error(`Invalid tags values: ${tags}`);
