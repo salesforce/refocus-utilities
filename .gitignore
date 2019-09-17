@@ -47,3 +47,6 @@ dump.rdb
 
 # Ignore registry.json
 registry.json
+
+# Ignore IntelliJ IDEA developers configs
+.idea/
