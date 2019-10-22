@@ -19,13 +19,15 @@ const samsto = require('../constants');
 
 module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
     .then((subjectKeys) => {
-      debug('%d samsto:subject:___ keys found %o', subjectKeys.length,
-        subjectKeys);
+      debug('%d samsto:subject:___ keys found', subjectKeys.length);
+      subjectKeys.forEach((key) =>
+        debug(key)
+      );
       const getSubjectsCmds = subjectKeys.map((subjKey) => ['hgetall', subjKey]);
       return redis.multi(getSubjectsCmds).exec();
     })
     .then((getSubjsResults) => {
-      const subjTagsSetCmds = [];
+      const batch = redis.multi();
       getSubjsResults.forEach((subjRes) => {
         const subject = subjRes[1];
         const subjAbsPath = subject.absolutePath.toLowerCase();
@@ -37,21 +39,28 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
             }
 
             if (tags.length) {
-              const cmd = ['sadd', `${samsto.pfx.subjectTags}${subjAbsPath}`, ...tags];
-              subjTagsSetCmds.push(cmd);
+              batch.sadd(`${samsto.pfx.subjectTags}${subjAbsPath}`, ...tags);
             }
           }
         }
       });
 
+      const cmds = batch._queue
+        .filter(cmd => cmd.name !== 'multi')
+        .map(cmd => `${cmd.name}(${cmd.args.join(', ')})`);
       if (preview) {
-        debug('[Preview mode] %d commands to be executed: %o',
-          subjTagsSetCmds.length, subjTagsSetCmds);
+        debug('[Preview mode] %d commands to be executed:', cmds.length);
+        cmds.forEach((cmd) =>
+          debug('[Preview mode] %O', cmd)
+        );
         return Promise.resolve();
       }
 
-      debug('%d commands executing: %o', subjTagsSetCmds.length, subjTagsSetCmds);
-      return redis.multi(subjTagsSetCmds).exec();
+      debug('%d commands executing:', cmds.length);
+      cmds.forEach((cmd) =>
+        debug('%O', cmd)
+      );
+      return batch.exec();
     })
     .then(() => debug('Success!'))
     .catch((err) => console.error(err));

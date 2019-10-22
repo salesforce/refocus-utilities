@@ -12,7 +12,7 @@
 const expect = require('chai').expect;
 const aspectAttributesAsKeys =
   require('../../../src/sampleStore/attributesAsKeys/aspectAttributesAsKeys');
-const Redis = require('ioredis-mock');
+const Redis = require('ioredis');
 const redis = new Redis();
 const samsto = require('../../../src/sampleStore/constants');
 const aspTagsPfx = samsto.pfx.aspectTags;
@@ -110,6 +110,8 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
       .then(() => done());
   });
 
+  after(() => redis.flushall());
+
   it('ok - aspect tags are added as keys', (done) => {
     aspectAttributesAsKeys(redis, false)
       .then(() => Promise.all([
@@ -160,9 +162,9 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
         expect(res[2]).to.equal(0);
 
         // checks tags set members
-        expect(res[3]).to.deep.equal(['onetag']);
-        expect(res[4]).to.deep.equal(['aspect', 'published', 'multipleTags']);
-        expect(res[5]).to.deep.equal([]);
+        expect(res[3]).to.have.members(['onetag']);
+        expect(res[4]).to.have.members(['aspect', 'published', 'multipleTags']);
+        expect(res[5]).to.have.members([]);
 
         // aspect writers key exists
         expect(res[6]).to.equal(1);
@@ -170,104 +172,75 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
         expect(res[8]).to.equal(0);
 
         // check aspect writers set members
-        expect(res[9]).to.deep.equal(['user1']);
-        expect(res[10]).to.deep.equal(['user1', 'user2', 'user3']);
-        expect(res[11]).to.deep.equal([]);
+        expect(res[9]).to.have.members(['user1']);
+        expect(res[10]).to.have.members(['user1', 'user2', 'user3']);
+        expect(res[11]).to.have.members([]);
 
         // basic range: key exists and check members
         expect(res[12]).to.equal(1);
-        expect(res[13]).to.deep.equal(
-          ['3:min:Critical', '0',
-          '0:max:Critical', '1',
-          '0:max:OK', '10',
-          '3:min:Warning', '2',
-          '0:max:Warning', '3',
-          '1:min:Info', '4',
-          '2:max:Info', '4',
-          '3:min:OK', '5',
+
+        expect(res[13]).to.deep.equal([
+            '0:min:Critical:0', '0',
+            '1:max:Critical:1', '1',
+            '0:min:Warning:2', '2',
+            '1:max:Warning:3', '3',
+            '0:min:Info:4', '4',
+            '1:max:Info:4', '4',
+            '0:min:OK:5', '5',
+            '1:max:OK:10', '10',
           ]);
 
         /* negative int ranges with undefined range in the middle:
         check key and members */
         expect(res[14]).to.equal(1);
         expect(res[15]).to.deep.equal([
-          '0:max:Critical',
-          '-1',
-          '3:min:Critical',
-          '-10',
-          '1:min:Warning',
-          '0',
-          '2:max:Warning',
-          '0',
-          '3:min:OK',
-          '1',
-          '0:max:OK',
-          '10',
+          '0:min:Critical:-10', '-10',
+          '1:max:Critical:-1', '-1',
+          '0:min:Warning:0', '0',
+          '1:max:Warning:0', '0',
+          '0:min:OK:1', '1',
+          '1:max:OK:10', '10',
         ]);
 
         // null and non-contiguous ranges: check key and members
         expect(res[16]).to.equal(1);
-        expect(res[17]).to.deep.equal(['3:min:Critical',
-          '0',
-          '0:max:Critical',
-          '10',
-          '3:min:Info',
-          '20',
-          '0:max:Info',
-          '30',
+        expect(res[17]).to.deep.equal([
+          '0:min:Critical:0', '0',
+          '1:max:Critical:10', '10',
+          '0:min:Info:20', '20',
+          '1:max:Info:30', '30',
         ]);
 
         // ranges touching edges reverse order: check key and members
         expect(res[18]).to.equal(1);
-        expect(res[19]).to.deep.equal(['3:min:Info',
-          '0',
-          '3:min:Critical',
-          '10',
-          '0:max:Warning',
-          '10',
-          '0:max:Critical',
-          '15',
-          '3:min:Warning',
-          '5',
-          '0:max:Info',
-          '5',
+        expect(res[19]).to.deep.equal([
+          '0:min:Info:0', '0',
+          '1:max:Info:4.999999999999999', '4.9999999999999991',
+          '0:min:Warning:5', '5',
+          '1:max:Warning:9.999999999999998', '9.9999999999999982',
+          '0:min:Critical:10', '10',
+          '1:max:Critical:15', '15',
         ]);
 
         /* touching edges, singular ranges, reverse (lower value has precedence)
         check key and members */
         expect(res[20]).to.equal(1);
-        expect(res[21]).to.deep.equal(['3:min:Critical',
-          '0',
-          '0:max:Info',
-          '10',
-          '1:min:OK',
-          '10',
-          '2:max:OK',
-          '10',
-          '0:max:Critical',
-          '5',
-          '1:min:Warning',
-          '5',
-          '2:max:Warning',
-          '5',
-          '3:min:Info',
-          '5',
+        expect(res[21]).to.deep.equal([
+          '0:min:Critical:0', '0',
+          '1:max:Critical:5', '5',
+          '0:min:Info:5.000000000000001', '5.0000000000000009',
+          '1:max:Info:10', '10',
         ]);
 
         // decimal ranges: check key and members
         expect(res[22]).to.equal(1);
-        expect(res[23]).to.deep.equal(['3:min:Critical',
-          '0',
-          '0:max:Critical',
-          '2.5',
-          '3:min:Warning',
-          '2.5',
-          '0:max:Warning',
-          '3.1',
-          '3:min:Info',
-          '3.2',
-          '0:max:Info',
-          '5',
+        expect(res[23]).to.deep.equal([
+          '0:min:Critical:0', '0',
+          '1:max:Critical:2.5', '2.5',
+          '0:min:Warning:2.500000000000001', '2.5000000000000009',
+          '1:max:Warning:3.1', '3.1000000000000001',
+          '0:min:Info:3.2', '3.2000000000000002',
+          '1:max:Info:5', '5',
         ]);
         done();
       })

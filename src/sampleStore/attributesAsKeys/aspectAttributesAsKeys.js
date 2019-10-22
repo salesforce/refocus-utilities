@@ -18,61 +18,21 @@
 const debug = require('debug')
 ('refocus-utilities:sampleStore:aspectAttributesAsKeys');
 const samsto = require('../constants');
-
-function getRangesKeys(status, range) {
-  const [min, max] = range;
-
-  const precedence = {};
-  if (min === max) { // make sure min is first for flat ranges
-    precedence.min = 1;
-    precedence.max = 2;
-  } else { // ties go to the lower range
-    precedence.max = 0;
-    precedence.min = 3;
-  }
-
-  const minKey = getRangeKey({ type: 'min', status, precedence });
-  const maxKey = getRangeKey({ type: 'max', status, precedence });
-  return [minKey, maxKey];
-
-  function getRangeKey({ type, precedence, status }) {
-    return `${precedence[type]}:${type}:${status}`;
-  }
-}
+const statusCalculation = require('./statusCalculation');
 
 /**
  * Set ranges keys for this aspect.
  *
  * @param  {Object} aspect - aspect object from Redis
- * @param  {Boolean} preview - preview mode
- * @param  {Array} redisCmds - redis commands array
+ * @param  {Array} batch - active redis batch
  */
-function addRangesCmds(aspect, preview, redisCmds) {
-  const key = `${samsto.pfx.aspectRanges}${aspect.name.toLowerCase()}`;
-  const ranges = {
-    Critical: aspect.criticalRange,
-    Warning: aspect.warningRange,
-    Info: aspect.infoRange,
-    OK: aspect.okRange,
-  };
-
-  Object.entries(ranges)
-    .filter(([status, range]) => range)
-    .reduce((redisCmds, [status, minMax]) => {
-      const minMaxVal = JSON.parse(minMax);
-      const minMaxKey = getRangesKeys(
-        status, [minMaxVal[0], minMaxVal[1]]);
-      const minCmd = ['zadd', key, minMaxVal[0], minMaxKey[0]];
-      const maxCmd = ['zadd', key, minMaxVal[1], minMaxKey[1]];
-
-      redisCmds.push(minCmd);
-      redisCmds.push(maxCmd);
-
-      return redisCmds;
-    }, redisCmds);
+function addRangesCmds(aspect, batch) {
+  let ranges = statusCalculation.getAspectRanges(aspect);
+  ranges = statusCalculation.preprocessOverlaps(ranges);
+  statusCalculation.setRanges(batch, ranges, aspect.name);
 } // addRangesCmds
 
-function addTagsCmds(aspName, aspect, preview, aspAttrCmds) {
+function addTagsCmds(aspName, aspect, batch) {
   if (aspect.tags && typeof aspect.tags === 'string') {
     const tags = JSON.parse(aspect.tags);
     if (!Array.isArray(tags)) {
@@ -80,13 +40,12 @@ function addTagsCmds(aspName, aspect, preview, aspAttrCmds) {
     }
 
     if (tags.length) {
-      const cmd = ['sadd', `${samsto.pfx.aspectTags}${aspName}`, ...tags];
-      aspAttrCmds.push(cmd);
+      batch.sadd(`${samsto.pfx.aspectTags}${aspName}`, tags);
     }
   }
 }
 
-function addWritersCmds(aspName, aspect, preview, aspAttrCmds) {
+function addWritersCmds(aspName, aspect, batch) {
   if (aspect.writers && typeof aspect.writers === 'string') {
     const writers = JSON.parse(aspect.writers);
     if (!Array.isArray(writers)) {
@@ -94,42 +53,53 @@ function addWritersCmds(aspName, aspect, preview, aspAttrCmds) {
     }
 
     if (writers.length) {
-      const cmd = ['sadd', `${samsto.pfx.aspectWriters}${aspName}`, ...writers];
-      aspAttrCmds.push(cmd);
+      batch.sadd(`${samsto.pfx.aspectWriters}${aspName}`, writers);
     }
   }
 }
 
 module.exports = (redis, preview=true) => redis.smembers(samsto.key.aspects)
     .then((aspectKeys) => {
-      debug('%d samsto:aspect:___ keys found %o', aspectKeys.length,
-        aspectKeys);
-      const getAspectCmds = aspectKeys.map((aspKey) => ['hgetall', aspKey]);
-      return redis.multi(getAspectCmds).exec();
+      debug('%d samsto:aspect:___ keys found', aspectKeys.length);
+      aspectKeys.forEach((key) =>
+        debug(key)
+      );
+      const batch = redis.multi();
+      aspectKeys.map((aspKey) => batch.hgetall(aspKey));
+      return batch.exec();
     })
     .then((getAspResults) => {
-      const aspAttrCmds = [];
+      const batch = redis.multi();
       getAspResults.forEach((aspRes) => {
         const asp = aspRes[1];
         const aspName = asp.name;
         if (asp.isPublished === 'true') {
           if (aspName) {
             // add tags, writers and ranges commands
-            addTagsCmds(aspName, asp, preview, aspAttrCmds);
-            addWritersCmds(aspName, asp, preview, aspAttrCmds);
-            addRangesCmds(asp, preview, aspAttrCmds);
+            addTagsCmds(aspName, asp, batch);
+            addWritersCmds(aspName, asp, batch);
+            addRangesCmds(asp, batch);
           }
         }
       });
 
+      const cmds = batch._queue
+        .filter(cmd => cmd.name !== 'multi')
+        .map(cmd => `${cmd.name}(${cmd.args.join(', ')})`);
+
       if (preview) {
-        debug('[Preview mode] %d commands to be executed: %o',
-          aspAttrCmds.length, aspAttrCmds);
+        debug('[Preview mode] %d commands to be executed:', cmds.length);
+        cmds.forEach((cmd) =>
+          debug('[Preview mode] %O', cmd)
+        );
         return Promise.resolve();
       }
 
-      debug('%d commands executing: %o', aspAttrCmds.length, aspAttrCmds);
-      return redis.multi(aspAttrCmds).exec();
+      debug('%d commands executing:', cmds.length);
+      cmds.forEach((cmd) =>
+        debug(cmd)
+      );
+      return batch.exec();
     })
     .then(() => debug('Success!'))
     .catch((err) => console.error(err));
