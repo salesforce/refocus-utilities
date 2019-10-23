@@ -23,13 +23,14 @@ const statusCalculation = require('./statusCalculation');
 /**
  * Set ranges keys for this aspect.
  *
+ * @param  {String} aspName - aspect name
  * @param  {Object} aspect - aspect object from Redis
  * @param  {Array} batch - active redis batch
  */
-function addRangesCmds(aspect, batch) {
+function addRangesCmds(aspName, aspect, batch) {
   let ranges = statusCalculation.getAspectRanges(aspect);
   ranges = statusCalculation.preprocessOverlaps(ranges);
-  statusCalculation.setRanges(batch, ranges, aspect.name);
+  statusCalculation.setRanges(batch, ranges, aspName);
 } // addRangesCmds
 
 function addTagsCmds(aspName, aspect, batch) {
@@ -72,13 +73,13 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.aspects)
       const batch = redis.multi();
       getAspResults.forEach((aspRes) => {
         const asp = aspRes[1];
-        const aspName = asp.name;
+        const aspName = asp.name.toLowerCase();
         if (asp.isPublished === 'true') {
           if (aspName) {
             // add tags, writers and ranges commands
             addTagsCmds(aspName, asp, batch);
             addWritersCmds(aspName, asp, batch);
-            addRangesCmds(asp, batch);
+            addRangesCmds(aspName, asp, batch);
           }
         }
       });

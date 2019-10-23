@@ -54,7 +54,7 @@ function getAspectRanges(aspect) {
  * @param  {String} aspName - aspect name
  */
 function setRanges(batch, ranges, aspName) {
-  const key = `${samsto.pfx.aspectRanges}${aspName.toLowerCase()}`;
+  const key = `${samsto.pfx.aspectRanges}${aspName}`;
 
   ranges.map((range) =>
     batch
