@@ -51,11 +51,9 @@ function getAspectRanges(aspect) {
  *
  * @param  {Object} batch - active redis batch
  * @param  {Array<Object>} ranges - sorted, non-overlapping list of aspect ranges
- * @param  {String} aspName - aspect name
+ * @param  {String} key - redis key
  */
-function setRanges(batch, ranges, aspName) {
-  const key = `${samsto.pfx.aspectRanges}${aspName}`;
-
+function setRanges(batch, ranges, key) {
   ranges.map((range) =>
     batch
     .zadd(key, range.min, getRangeKey('min', range.status, range.min))

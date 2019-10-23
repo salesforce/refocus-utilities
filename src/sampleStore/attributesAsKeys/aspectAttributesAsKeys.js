@@ -28,12 +28,18 @@ const statusCalculation = require('./statusCalculation');
  * @param  {Array} batch - active redis batch
  */
 function addRangesCmds(aspName, aspect, batch) {
+  const key = `${samsto.pfx.aspectRanges}${aspName}`;
+  batch.del(key);
+
   let ranges = statusCalculation.getAspectRanges(aspect);
   ranges = statusCalculation.preprocessOverlaps(ranges);
-  statusCalculation.setRanges(batch, ranges, aspName);
+  statusCalculation.setRanges(batch, ranges, key);
 } // addRangesCmds
 
 function addTagsCmds(aspName, aspect, batch) {
+  const key = `${samsto.pfx.aspectTags}${aspName}`;
+  batch.del(key);
+
   if (aspect.tags && typeof aspect.tags === 'string') {
     const tags = JSON.parse(aspect.tags);
     if (!Array.isArray(tags)) {
@@ -41,12 +47,15 @@ function addTagsCmds(aspName, aspect, batch) {
     }
 
     if (tags.length) {
-      batch.sadd(`${samsto.pfx.aspectTags}${aspName}`, tags);
+      batch.sadd(key, tags);
     }
   }
 }
 
 function addWritersCmds(aspName, aspect, batch) {
+  const key = `${samsto.pfx.aspectWriters}${aspName}`;
+  batch.del(key);
+
   if (aspect.writers && typeof aspect.writers === 'string') {
     const writers = JSON.parse(aspect.writers);
     if (!Array.isArray(writers)) {
@@ -54,7 +63,7 @@ function addWritersCmds(aspName, aspect, batch) {
     }
 
     if (writers.length) {
-      batch.sadd(`${samsto.pfx.aspectWriters}${aspName}`, writers);
+      batch.sadd(key, writers);
     }
   }
 }

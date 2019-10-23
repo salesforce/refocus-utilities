@@ -59,7 +59,7 @@ Options
 
 ### sample-store-attributes-as-keys
 
-Use sample-store-attributes-as-keys to set up the new keys for subject/aspect tags, aspect writers, and aspect ranges.
+Use sample-store-attributes-as-keys to set up the new keys for subject/aspect tags, aspect writers, and aspect ranges before deploying the corresponding code changes. Run this again if the format needs to be changed in the future.
 
 The redis connection url defaults to local redis instance
 `redis://localhost:6379`, but if environment variable `REDIS_URL` exists, it
