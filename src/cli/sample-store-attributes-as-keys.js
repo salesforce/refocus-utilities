@@ -28,6 +28,11 @@ const optionDefinitions = [
     type: String,
   },
   {
+    name: 'clear',
+    alias: 'c',
+    description: 'Clear existing keys without adding new ones',
+  },
+  {
     name: 'preview',
     alias: 'p',
     description: 'Preview attributes key which would be added/updated',

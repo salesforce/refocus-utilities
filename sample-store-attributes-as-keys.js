@@ -34,7 +34,14 @@ const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
 
+let clearMode;
 let previewMode;
+
+if (options.hasOwnProperty('clear')) {
+  clearMode = true;
+} else {
+  clearMode = false;
+}
 
 if (options.hasOwnProperty('preview')) {
   previewMode = true;
@@ -42,8 +49,8 @@ if (options.hasOwnProperty('preview')) {
   previewMode = false;
 }
 
-subjectAttributesAsKeys(redis, previewMode)
-.then(() => aspectAttributesAsKeys(redis, previewMode))
+subjectAttributesAsKeys(redis, clearMode, previewMode)
+.then(() => aspectAttributesAsKeys(redis, clearMode, previewMode))
 .then(() => {
   console.log('Success! [%dms]', new Date() - startTime);
   process.exit(0);

@@ -17,7 +17,7 @@ const debug = require('debug')
 ('refocus-utilities:sampleStore:subjectAttributesAsKeys');
 const samsto = require('../constants');
 
-module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
+module.exports = (redis, clear=false, preview=true) => redis.smembers(samsto.key.subjects)
     .then((subjectKeys) => {
       debug('%d samsto:subject:___ keys found', subjectKeys.length);
       subjectKeys.forEach((key) =>
@@ -32,6 +32,10 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
         const subject = subjRes[1];
         const subjAbsPath = subject.absolutePath.toLowerCase();
         if (subject.isPublished === 'true') {
+          const key = `${samsto.pfx.subjectTags}${subjAbsPath}`;
+          batch.del(key);
+          if (clear) return;
+
           if (subjAbsPath && subject.tags && typeof subject.tags === 'string') {
             const tags = JSON.parse(subject.tags);
             if (!Array.isArray(tags)) {
@@ -39,7 +43,7 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.subjects)
             }
 
             if (tags.length) {
-              batch.sadd(`${samsto.pfx.subjectTags}${subjAbsPath}`, ...tags);
+              batch.sadd(key, ...tags);
             }
           }
         }

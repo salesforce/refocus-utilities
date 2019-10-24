@@ -113,7 +113,7 @@ describe('test/sampleStore/attributesAsKeys/aspectAttributesAsKeys.js >', () => 
   after(() => redis.flushall());
 
   it('ok - aspect tags are added as keys', (done) => {
-    aspectAttributesAsKeys(redis, false)
+    aspectAttributesAsKeys(redis, false, false)
       .then(() => Promise.all([
 
         // aspect tags keys exists

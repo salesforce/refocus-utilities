@@ -66,7 +66,9 @@ The redis connection url defaults to local redis instance
 will use that instead. Alternatively, you can pass a redis connection url using
 command option `--redisUrl` (or shortcut `-r`).
 
-Use `--preview` (or `-p`) to run in preview mode, to see what keys would be deleted before actually running the cleanup utility for real.
+Use `--clear` (or `-c`) to clear all attribute keys that were added from a previous run of the script.
+
+Use `--preview` (or `-p`) to run in preview mode, to see what keys would be deleted and added before actually running the cleanup utility for real.
 
 ```
 Synopsis
@@ -79,6 +81,7 @@ Synopsis
 Options
 
   -r, --redisUrl string   The redis connection url (defaults to `process.env.REDIS_URL` or `redis://localhost:6379`).
+  -c, --clear             Clear existing keys without adding new ones
   -p, --preview           Enable preview mode
   -h, --help              Print this usage guide
 ```

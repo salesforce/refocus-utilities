@@ -27,18 +27,20 @@ const statusCalculation = require('./statusCalculation');
  * @param  {Object} aspect - aspect object from Redis
  * @param  {Array} batch - active redis batch
  */
-function addRangesCmds(aspName, aspect, batch) {
+function addRangesCmds(aspName, aspect, batch, clear) {
   const key = `${samsto.pfx.aspectRanges}${aspName}`;
   batch.del(key);
+  if (clear) return;
 
   let ranges = statusCalculation.getAspectRanges(aspect);
   ranges = statusCalculation.preprocessOverlaps(ranges);
   statusCalculation.setRanges(batch, ranges, key);
 } // addRangesCmds
 
-function addTagsCmds(aspName, aspect, batch) {
+function addTagsCmds(aspName, aspect, batch, clear) {
   const key = `${samsto.pfx.aspectTags}${aspName}`;
   batch.del(key);
+  if (clear) return;
 
   if (aspect.tags && typeof aspect.tags === 'string') {
     const tags = JSON.parse(aspect.tags);
@@ -52,9 +54,10 @@ function addTagsCmds(aspName, aspect, batch) {
   }
 }
 
-function addWritersCmds(aspName, aspect, batch) {
+function addWritersCmds(aspName, aspect, batch, clear) {
   const key = `${samsto.pfx.aspectWriters}${aspName}`;
   batch.del(key);
+  if (clear) return;
 
   if (aspect.writers && typeof aspect.writers === 'string') {
     const writers = JSON.parse(aspect.writers);
@@ -68,7 +71,7 @@ function addWritersCmds(aspName, aspect, batch) {
   }
 }
 
-module.exports = (redis, preview=true) => redis.smembers(samsto.key.aspects)
+module.exports = (redis, clear=false, preview=true) => redis.smembers(samsto.key.aspects)
     .then((aspectKeys) => {
       debug('%d samsto:aspect:___ keys found', aspectKeys.length);
       aspectKeys.forEach((key) =>
@@ -86,9 +89,9 @@ module.exports = (redis, preview=true) => redis.smembers(samsto.key.aspects)
         if (asp.isPublished === 'true') {
           if (aspName) {
             // add tags, writers and ranges commands
-            addTagsCmds(aspName, asp, batch);
-            addWritersCmds(aspName, asp, batch);
-            addRangesCmds(aspName, asp, batch);
+            addTagsCmds(aspName, asp, batch, clear);
+            addWritersCmds(aspName, asp, batch, clear);
+            addRangesCmds(aspName, asp, batch, clear);
           }
         }
       });

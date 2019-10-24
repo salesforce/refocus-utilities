@@ -66,7 +66,7 @@ describe('test/sampleStore/attributesAsKeys/subjectAttributesAsKeys.js >', () =>
   after(() => redis.flushall());
 
   it('ok - subject attributes are added as keys', (done) => {
-    subjectAttributesAsKeys(redis, false)
+    subjectAttributesAsKeys(redis, false, false)
       .then(() => Promise.all([
         redis.exists(`${samsto.pfx.subjectTags}${subjRoot.absolutePath}`),
         redis.exists(`${samsto.pfx.subjectTags}${subjChildUnPub.absolutePath}`),
