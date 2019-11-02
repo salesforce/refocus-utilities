@@ -32,19 +32,25 @@ module.exports = (redis, clear=false, preview=true) => redis.smembers(samsto.key
         const subject = subjRes[1];
         const subjAbsPath = subject.absolutePath.toLowerCase();
         if (subject.isPublished === 'true') {
-          const key = `${samsto.pfx.subjectTags}${subjAbsPath}`;
-          batch.del(key);
+          const tagsKey = `${samsto.pfx.subjectTags}${subjAbsPath}`;
+          const existsKey = `${samsto.pfx.subjectExists}${subjAbsPath}`;
+          batch.del(tagsKey);
+          batch.del(existsKey);
           if (clear) return;
 
-          if (subjAbsPath && subject.tags && typeof subject.tags === 'string') {
-            const tags = JSON.parse(subject.tags);
-            if (!Array.isArray(tags)) {
-              throw new Error(`Invalid tags values: ${tags}`);
+          if (subjAbsPath) {
+            if (subject.tags && typeof subject.tags === 'string') {
+              const tags = JSON.parse(subject.tags);
+              if (!Array.isArray(tags)) {
+                throw new Error(`Invalid tags values: ${tags}`);
+              }
+
+              if (tags.length) {
+                batch.sadd(tagsKey, ...tags);
+              }
             }
 
-            if (tags.length) {
-              batch.sadd(key, ...tags);
-            }
+            batch.set(existsKey, 'true');
           }
         }
       });

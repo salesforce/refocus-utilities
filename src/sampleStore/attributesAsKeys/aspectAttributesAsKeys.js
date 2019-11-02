@@ -71,6 +71,14 @@ function addWritersCmds(aspName, aspect, batch, clear) {
   }
 }
 
+function addExistsCmds(aspName, aspect, batch, clear) {
+  const key = `${samsto.pfx.aspectExists}${aspName}`;
+  batch.del(key);
+  if (clear) return;
+
+  batch.set(key, 'true');
+}
+
 module.exports = (redis, clear=false, preview=true) => redis.smembers(samsto.key.aspects)
     .then((aspectKeys) => {
       debug('%d samsto:aspect:___ keys found', aspectKeys.length);
@@ -92,6 +100,7 @@ module.exports = (redis, clear=false, preview=true) => redis.smembers(samsto.key
             addTagsCmds(aspName, asp, batch, clear);
             addWritersCmds(aspName, asp, batch, clear);
             addRangesCmds(aspName, asp, batch, clear);
+            addExistsCmds(aspName, asp, batch, clear);
           }
         }
       });
