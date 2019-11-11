@@ -51,6 +51,23 @@ function addRangesCmds(aspName, aspect, batch, clear) {
   // preprocessOverlaps assumes ascending order
   // getAspectRanges is supposed to sort them - what's happening?
   // they are correctly sorted locally but not in heroku
+  // the order that the ranges are passed to the sort fn is different!
+  // locally, it goes in order - critical first, so true
+  // on heroku, warning first, so false
+  // ah!
+  // my sort function was return the boolean result of >
+  // it's supposed to be -1/0/1
+  // it works in most cases because the true/false gets converted to 0/1,
+  // and the zero doesn't change the order, so as long as the next one does change it
+  // it still works out to be the same
+  // so if the sort function gets called in the right order it will sort correctly
+  // and this seems to happen most of the time, at least for simple/small arrays
+  // but this isn't guaranteed; the sort fn is incorrect, and there will be cases where it
+  // returns an incorrect result, depending on the implementation
+  // in this case it seems like the elements are getting called in different orders in
+  // different environments, which is why the error is only triggered in heroku
+  // ok, pretty confident this is it.
+  // so I just need to fix that to return an int.
 
   ranges = statusCalculation.preprocessOverlaps(ranges);
   console.log('-- setting', ranges);

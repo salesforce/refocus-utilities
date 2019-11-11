@@ -32,10 +32,10 @@ module.exports = {
  */
 function getAspectRanges(aspect) {
   const ranges = {
-    Critical: aspect.criticalRange,
-    Warning: aspect.warningRange,
-    Info: aspect.infoRange,
     OK: aspect.okRange,
+    Info: aspect.infoRange,
+    Warning: aspect.warningRange,
+    Critical: aspect.criticalRange,
   };
 
   const rangeArr = Object.entries(ranges)
@@ -44,7 +44,7 @@ function getAspectRanges(aspect) {
 
   console.log('before sort', rangeArr);
   const sorted = rangeArr.sort((r1, r2) => {
-    const ret = r1.min === r2.min ? r1.max > r2.max : r1.min > r2.min;
+    const ret = r1.min === r2.min ? r1.max - r2.max : r1.min - r2.min;
     console.log('...', r1, r2);
     console.log('->', ret);
     return ret;
