@@ -49,6 +49,10 @@ if (options.hasOwnProperty('preview')) {
   previewMode = false;
 }
 
+console.log('500 - .1:', 500 - .1);
+console.log('1 - .1:', 1 - .1);
+console.log('10 + .1:', 10 + .1);
+
 subjectAttributesAsKeys(redis, clearMode, previewMode)
 .then(() => aspectAttributesAsKeys(redis, clearMode, previewMode))
 .then(() => {

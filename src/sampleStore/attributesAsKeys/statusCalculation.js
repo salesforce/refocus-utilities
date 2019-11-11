@@ -185,6 +185,7 @@ function adjustDown(n) {
     nextTry = n - adjustment;
   }
 
+  console.log(`-- adjustDown ${n} -> ${best}, ${adjustment}`);
   return best;
 }
 
@@ -206,6 +207,7 @@ function adjustUp(n) {
     nextTry = n + adjustment;
   }
 
+  console.log(`-- adjustUp ${n} -> ${best}, ${adjustment}`);
   return best;
 }
 

@@ -33,7 +33,17 @@ function addRangesCmds(aspName, aspect, batch, clear) {
   if (clear) return;
 
   let ranges = statusCalculation.getAspectRanges(aspect);
+  console.log('-- preprocessing', ranges);
+
+  // somehow this isn't adjusting to decimals
+  // I think the only way this could happen is if adjustDown fails.
+  // and the only way that could happen is if 500 - .1 = 500
+  // which is ridiculous, that should never happen.
+  // possibly a different environment with an old or incorrect math module?
+  // possibly it's somehow configured to only allow integer math?
+  // is it possible the volume of operations somehow overwhelms it?
   ranges = statusCalculation.preprocessOverlaps(ranges);
+  console.log('-- setting', ranges);
   statusCalculation.setRanges(batch, ranges, key);
 } // addRangesCmds
 
