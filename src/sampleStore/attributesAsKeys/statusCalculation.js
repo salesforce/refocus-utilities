@@ -84,8 +84,10 @@ function getRangeKey(type, status, score) {
 function preprocessOverlaps(rangesToMerge) {
   const mergedRanges = [];
   while (rangesToMerge.length) {
+    console.log('rangesToMerge', rangesToMerge);
     const ranges = [rangesToMerge.shift(), rangesToMerge.shift()];
     const mergeResult = mergeOverlappingRanges(...ranges);
+    console.log('mergeResult', mergeResult);
 
     let done;
     let next;
@@ -113,6 +115,7 @@ function preprocessOverlaps(rangesToMerge) {
  * @returns Array<Object>
  */
 function mergeOverlappingRanges(range1, range2) {
+  console.log('mergeOverlappingRanges', range1, range2);
   if (!range1 || !range2) return [];
 
   const range1Priority = statusPrecedence[range1.status];
@@ -126,42 +129,59 @@ function mergeOverlappingRanges(range1, range2) {
   const touching = !encompassing && (range1.max === range2.min);
 
   if (touching) {
+    console.log('touching');
+
     // for touching flat ranges, remove the range completely if it's lower priority
     if (range1.min === range1.max && range1Priority < range2Priority) {
+      console.log(1);
       return [range2];
     } else if (range2.min === range2.max && range2Priority < range1Priority) {
+      console.log(2);
       return [range1];
     }
 
     // remove the edge from the lower-priority range
     if (range1Priority < range2Priority) {
+      console.log(3);
       range1.max = adjustDown(range1.max);
     } else {
+      console.log(4);
       range2.min = adjustUp(range2.min);
     }
 
     return [range1, range2];
   } else if (overlapping) {
+    console.log('overlapping');
+
     // truncate lower-priority range
     if (range1Priority < range2Priority) {
+      console.log(1);
       range1.max = adjustDown(range2.min);
     } else {
+      console.log(2);
       range2.min = adjustUp(range1.max);
     }
 
     return [range1, range2];
   } else if (encompassing) {
+    console.log('encompassing');
     if (range1Priority < range2Priority) {
+      console.log(1);
+
       // break up into three ranges
       const low = Range(range1.status, [range1.min, adjustDown(range2.min)]);
       const middle = Range(range2.status, [range2.min, range2.max]);
       const high = Range(range1.status, [adjustUp(range2.max), range1.max]);
       return [low, middle, high].filter(r => r.min <= r.max);
     } else {
+      console.log(2);
+
       // remove range 2
       return [range1];
     }
   } else {
+    console.log('as-is');
+
     // if not touching, overlapping, or encompassing, return ranges as-is.
     return [range1, range2];
   }

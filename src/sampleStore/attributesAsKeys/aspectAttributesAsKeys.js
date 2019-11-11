@@ -33,6 +33,7 @@ function addRangesCmds(aspName, aspect, batch, clear) {
   if (clear) return;
 
   let ranges = statusCalculation.getAspectRanges(aspect);
+  console.log('-- addRangesCmds', aspName);
   console.log('-- preprocessing', ranges);
 
   // somehow this isn't adjusting to decimals
@@ -42,6 +43,11 @@ function addRangesCmds(aspName, aspect, batch, clear) {
   // possibly a different environment with an old or incorrect math module?
   // possibly it's somehow configured to only allow integer math?
   // is it possible the volume of operations somehow overwhelms it?
+  // running with logging.
+  // 500 - .1 is correct
+  // so it can at least do math normally
+  // woah. Looks like adjustDown isn't even called for heimdall
+
   ranges = statusCalculation.preprocessOverlaps(ranges);
   console.log('-- setting', ranges);
   statusCalculation.setRanges(batch, ranges, key);
