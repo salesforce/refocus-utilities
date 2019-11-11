@@ -28,12 +28,12 @@ const statusCalculation = require('./statusCalculation');
  * @param  {Array} batch - active redis batch
  */
 function addRangesCmds(aspName, aspect, batch, clear) {
+  console.log('-- addRangesCmds', aspName);
   const key = `${samsto.pfx.aspectRanges}${aspName}`;
   batch.del(key);
   if (clear) return;
 
   let ranges = statusCalculation.getAspectRanges(aspect);
-  console.log('-- addRangesCmds', aspName);
   console.log('-- preprocessing', ranges);
 
   // somehow this isn't adjusting to decimals
@@ -47,6 +47,10 @@ function addRangesCmds(aspName, aspect, batch, clear) {
   // 500 - .1 is correct
   // so it can at least do math normally
   // woah. Looks like adjustDown isn't even called for heimdall
+  // aha! looks like ranges are being passed in the wrong order
+  // preprocessOverlaps assumes ascending order
+  // getAspectRanges is supposed to sort them - what's happening?
+  // they are correctly sorted locally but not in heroku
 
   ranges = statusCalculation.preprocessOverlaps(ranges);
   console.log('-- setting', ranges);
