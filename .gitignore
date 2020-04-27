@@ -43,7 +43,7 @@ public/*
 dump.rdb
 
 # Remove codecoverage directory
-.coverage
+.nyc_output
 
 # Ignore registry.json
 registry.json
