@@ -129,25 +129,25 @@ describe('test/sampleStore/sampleCleanup/cleanup.js >', () => {
       .hmset('samsto:sample:subj4|asp1', sample6) // invalid sample
       .hmset('samsto:sample:subj4|asp2', sample7) // invalid sample
       .hmset('samsto:sample:subj5|asp1', sample8) // invalid sample
-    .exec()
-    .then(() => done());
+      .exec()
+      .then(() => done());
   });
 
   it('ok - cleanup samplestore', (done) => {
     sampleCleanup(redis)
-    .then(() => Promise.all([
-      redis.smembers('samsto:samples'),
-      redis.keys('samsto:sample*'),
-    ]))
-    .then(([res1, res2]) => {
-      expect(res1).to.deep.equal(['samsto:sample:a|aspect', 'samsto:sample:b|aspect']);
-      expect(res2.length).equals(3);
-      expect(res2).to.include('samsto:samples');
-      expect(res2).to.include('samsto:sample:subj1|asp1');
-      expect(res2).to.include('samsto:sample:subj2|asp2');
+      .then(() => Promise.all([
+        redis.smembers('samsto:samples'),
+        redis.keys('samsto:sample*'),
+      ]))
+      .then(([res1, res2]) => {
+        expect(res1).to.deep.equal(['samsto:sample:subj1|asp1', 'samsto:sample:subj2|asp2']);
+        expect(res2.length).equals(3);
+        expect(res2).to.include('samsto:samples');
+        expect(res2).to.include('samsto:sample:subj1|asp1');
+        expect(res2).to.include('samsto:sample:subj2|asp2');
 
-      done();
-    })
+        done();
+      })
       .catch(done);
   });
 });

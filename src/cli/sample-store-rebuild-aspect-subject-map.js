@@ -11,7 +11,7 @@
  *
  * Configure the CLI.
  */
-'use strict';
+
 const commandLineUsage = require('command-line-usage');
 
 /*

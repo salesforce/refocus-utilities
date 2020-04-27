@@ -18,9 +18,8 @@
  * If user provides a redisUrl, use that. Otherwise, if there is a "REDIS_URL"
  * environment variable, use that. Otherwise, try local default redis instance.
  */
-'use strict';
+
 const cmdName = 'sample-store-cleanup';
-const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const commandLineArgs = require('command-line-args');
 const Redis = require('ioredis');
 const cli = require('./src/cli/sample-store-cleanup');
@@ -37,24 +36,24 @@ console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
 console.log(options.preview);
 
-if (options.hasOwnProperty('preview')) {
+if (Object.prototype.hasOwnProperty.call(options, 'preview')) {
   previewSampleCleanup(redis)
-  .then(() => {
-    console.log('Success! [%dms]', new Date() - startTime);
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
+    .then(() => {
+      console.log('Success! [%dms]', new Date() - startTime);
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err.message);
+      process.exit(1);
+    });
 } else {
   sampleCleanup(redis)
-  .then(() => {
-    console.log('Success! [%dms]', new Date() - startTime);
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
+    .then(() => {
+      console.log('Success! [%dms]', new Date() - startTime);
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err.message);
+      process.exit(1);
+    });
 }

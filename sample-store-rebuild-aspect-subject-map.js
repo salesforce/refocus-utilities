@@ -13,9 +13,8 @@
  * If user provides a redisUrl, use that. Otherwise, if there is a "REDIS_URL"
  * environment variable, use that. Otherwise, try local default redis instance.
  */
-'use strict';
+
 const cmdName = 'sample-store-rebuild-aspect-subject-map';
-const debug = require('debug')('refocus-utilities');
 const commandLineArgs = require('command-line-args');
 const Redis = require('ioredis');
 const asmDelete = require('./src/sampleStore/aspectSubjectMap/delete');
@@ -30,15 +29,14 @@ cli.showUsage(options);
 const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
-
 // Delete and rebuild the Aspect-Subject Map
 asmDelete(redis)
-.then(() => asmPopulate(redis))
-.then(() => {
-  console.log('Success! [%dms]', new Date() - startTime);
-  process.exit(0);
-})
-.catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
+  .then(() => asmPopulate(redis))
+  .then(() => {
+    console.log('Success! [%dms]', new Date() - startTime);
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });

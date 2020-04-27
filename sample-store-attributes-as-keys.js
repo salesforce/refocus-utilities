@@ -9,14 +9,14 @@
 /**
  * sample-store-attributes-as-keys.js
  *
- * Create subjects tags and aspect tags, writers and ranges keys with corresponding sets.
+ * Create subjects tags and aspect tags, writers and ranges
+ * keys with corresponding sets.
  *
  * If user provides a redisUrl, use that. Otherwise, if there is a "REDIS_URL"
  * environment variable, use that. Otherwise, try local default redis instance.
  */
-'use strict';
+
 const cmdName = 'sample-store-attributes-as-keys';
-const debug = require('debug')('refocus-utilities');
 const commandLineArgs = require('command-line-args');
 const Redis = require('ioredis');
 const subjectAttributesAsKeys =
@@ -36,19 +36,19 @@ const redis = new Redis(redisUrl);
 
 let previewMode;
 
-if (options.hasOwnProperty('preview')) {
+if (Object.prototype.hasOwnProperty.call(options, 'preview')) {
   previewMode = true;
 } else {
   previewMode = false;
 }
 
 subjectAttributesAsKeys(redis, previewMode)
-.then(() => aspectAttributesAsKeys(redis, previewMode))
-.then(() => {
-  console.log('Success! [%dms]', new Date() - startTime);
-  process.exit(0);
-})
-.catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
+  .then(() => aspectAttributesAsKeys(redis, previewMode))
+  .then(() => {
+    console.log('Success! [%dms]', new Date() - startTime);
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
