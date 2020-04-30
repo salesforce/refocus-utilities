@@ -32,6 +32,12 @@ const optionDefinitions = [
     alias: 'h',
     description: 'Print this usage guide',
   },
+  {
+    name: 'subjectkey',
+    alias: 's',
+    description: '(Optional, specify the start of the absolutePath of subjects to be updated',
+    type: String,
+  }
 ];
 
 /*
@@ -51,7 +57,8 @@ const sections = [
       '  $ node sample-store-rebuild-subject-aspect-map',
       '  $ node sample-store-rebuild-subject-aspect-map [{bold --redisUrl} ' +
         'redis://YOUR_REDIS_CONNECTION_URL]',
-      '  $ node sample-store-rebuild-subject-aspect-map {bold --help}'
+      '  $ node sample-store-rebuild-subject-aspect-map {bold --help}',
+      '  $ node sample-store-rebuild-subject-aspect-map {bold --subjectkey subject.child.subchild}'
     ],
     raw: true,
   },
