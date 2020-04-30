@@ -73,16 +73,18 @@ function populateSubjectAspectMap(redis, subjectKey = '') {
   return new Promise((resolve, reject) => {
     const stream = createRedisSampleStream(redis, subjectKey);
     const addingJobs = [];
+    let numberOfSubAspMapEntriesAdded = 0;
     stream.on('data', (listOfSamples) => {
       addingJobs.push(addEntriesToAspectSubjectMap(redis, listOfSamples)
         .then(() => {
+          numberOfSubAspMapEntriesAdded += listOfSamples.length;
           log(`Added ${listOfSamples.length} aspects to subjectAspectMap`);
         }));
     });
 
     stream.on('end', () => {
       Promise.all(addingJobs)
-        .then(resolve)
+        .then(() => resolve(numberOfSubAspMapEntriesAdded))
         .catch(reject);
     });
   });

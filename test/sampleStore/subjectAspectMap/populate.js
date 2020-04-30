@@ -32,7 +32,7 @@ describe('test/sampleStore/subjectAspectMap/populate.js >', () => {
 
   afterEach((done) => {
     deleteSubjectAspectMap(redis)
-      .then(done);
+      .then(() => done());
   });
 
   it('ok - samsto:aspsubmap:___ added', (done) => {

@@ -8,6 +8,7 @@
     "test": "test"
   },
   "scripts": {
+    "start": "node black-tile.js",
     "coverage": "nyc npm test",
     "test": "npm run lint; mocha 'test/**/*.js' --recursive",
     "lint": "eslint *.js"

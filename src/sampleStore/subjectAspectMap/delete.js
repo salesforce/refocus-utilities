@@ -39,7 +39,7 @@ function deleteSetOfSubAspMapEntries(redis, subaspmapList) {
  * @returns {Promise} promise which resolves once deletion completes.
  */
 function deleteSubAspMap(redis, subjectKey = '') {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const subjectToMatch = `samsto:subaspmap:${subjectKey}*`;
     log(`Scanning for ${subjectToMatch}`);
     const stream = redis.scanStream({ match: subjectToMatch, count: 50 });
@@ -56,8 +56,11 @@ function deleteSubAspMap(redis, subjectKey = '') {
     stream.on('end', () => {
       Promise.all(deletionJobs).then(() => {
         log(`Deleted ${numberOfSubAspMapEntries} entries from subaspmap list`);
-        resolve();
-      });
+        resolve(numberOfSubAspMapEntries);
+      })
+        .catch((err) => {
+          reject(err);
+        });
     });
   });
 }
