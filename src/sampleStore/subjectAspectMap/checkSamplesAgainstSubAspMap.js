@@ -4,10 +4,13 @@ debug = debug('refocus-utilities:sampleStore:aspectSubjectMap:checkSamplesAgains
 
 /**
  * @param {object} redis - ioredis connection object
+ * @param {string} subjectKey - name of subjects to match in redis
  * @returns {object} readable stream of sample arrays
  */
-function createRedisSampleStream(redis) {
-  return redis.scanStream({ match: 'samsto:sample:*', count: 100 });
+function createRedisSampleStream(redis, subjectKey) {
+  const sampleMatch = `samsto:sample:${subjectKey}*`;
+  debug(`Scanning for samples matching ${sampleMatch}`);
+  return redis.scanStream({ match: sampleMatch, count: 100 });
 }
 
 /**
@@ -39,11 +42,13 @@ function checkIfEntriesExistInAspectSubjectMap(redis, listOfSamples) {
 
 /**
  * @param {object} redis - io redis connection object
+ * @param {string} subjectKey - name of subjects to match in redis,
+ * if none is supplied then matches all samples
  * @returns {Promise} - promise
  */
-function checkSamplesAgainstSubAspMap(redis) {
+function checkSamplesAgainstSubAspMap(redis, subjectKey = '') {
   return new Promise((resolve) => {
-    const sampleStream = createRedisSampleStream(redis);
+    const sampleStream = createRedisSampleStream(redis, subjectKey);
     const processes = [];
     let numberOfSamplesWithAspSubMap = 0;
     let totalNumberOfSamples = 0;

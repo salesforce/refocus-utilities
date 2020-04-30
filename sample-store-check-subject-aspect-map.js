@@ -27,11 +27,11 @@ const localRedis = 'redis://localhost:6379';
 cli.showUsage(options);
 
 const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
-
+const subjectKey = options.subjectkey || '';
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
 
-samCheck(redis).then((results) => {
+samCheck(redis, subjectKey).then((results) => {
   console.log(`Process Complete, out of ${results.total} samples, ${results.foundInMap} ` +
   'were found in the subject aspect map.');
   console.log(new Date() - startTime);
