@@ -17,16 +17,18 @@ const log = debug('refocus-utilities:sampleStore:subjectAspectMap:delete');
  * @returns {number} - number of deleted subaspmap
  */
 function deleteSetOfSubAspMapEntries(redis, subaspmapList) {
-  const pipeline = redis.pipeline();
-  subaspmapList.forEach((subaspmap) => {
-    pipeline.del(subaspmap);
-  });
-  return pipeline.exec((err) => {
-    if (err) {
-      log(`Error deleting subject aspect maps from redis: ${err}`);
-      return 0;
-    }
-    return subaspmapList.length;
+  return new Promise((resolve) => {
+    const pipeline = redis.pipeline();
+    subaspmapList.forEach((subaspmap) => {
+      pipeline.del(subaspmap);
+    });
+    return pipeline.exec((err) => {
+      if (err) {
+        log(`Error deleting subject aspect maps from redis: ${err}`);
+        resolve(0);
+      }
+      resolve(subaspmapList.length);
+    });
   });
 }
 
@@ -42,15 +44,20 @@ function deleteSubAspMap(redis, subjectKey = '') {
     log(`Scanning for ${subjectToMatch}`);
     const stream = redis.scanStream({ match: subjectToMatch, count: 50 });
     let numberOfSubAspMapEntries = 0;
-    stream.on('data', (subaspmapList) => deleteSetOfSubAspMapEntries(redis, subaspmapList)
-      .then((numberOfDeletions) => {
-        log(numberOfDeletions);
-        numberOfSubAspMapEntries += numberOfDeletions;
-      }));
+    const deletionJobs = [];
+    stream.on('data', (subaspmapList) => {
+      deletionJobs.push(deleteSetOfSubAspMapEntries(redis, subaspmapList)
+        .then((numberOfDeletions) => {
+          log(numberOfDeletions);
+          numberOfSubAspMapEntries += numberOfDeletions;
+        }));
+    });
 
     stream.on('end', () => {
-      log(`Deleted ${numberOfSubAspMapEntries} entries from subaspmap list`);
-      resolve();
+      Promise.all(deletionJobs).then(() => {
+        log(`Deleted ${numberOfSubAspMapEntries} entries from subaspmap list`);
+        resolve();
+      });
     });
   });
 }
