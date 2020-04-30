@@ -15,9 +15,11 @@ const Redis = require('ioredis-mock');
 const redis = new Redis();
 
 describe('test/sampleStore/subjectAspectMap/delete.js >', () => {
-  before((done) => {
-    redis.hmset('samsto:subaspmap:a', { s: 1 })
+  beforeEach((done) => {
+    redis
+      .hmset('samsto:subaspmap:a', { s: 1 })
       .then(() => redis.hmset('somethingelse', 'Should not be deleted'))
+      .then(() => redis.hmset('samsto:subaspmap:b.test', { s: 1 }))
       .then(() => done());
   });
 
@@ -25,6 +27,18 @@ describe('test/sampleStore/subjectAspectMap/delete.js >', () => {
     deleteSubAspMap(redis)
       .then(() => redis.exists('samsto:subaspmap:a'))
       .then((found) => expect(found).to.equal(0))
+      .then(() => redis.exists('somethingelse'))
+      .then((found) => expect(found).to.equal(1))
+      .then(() => done())
+      .catch(done);
+  });
+
+  it('ok - matching subject entry deleted, non-matching subject entries not deleted', (done) => {
+    deleteSubAspMap(redis, 'b')
+      .then(() => redis.exists('samsto:subaspmap:b.test'))
+      .then((found) => expect(found).to.equal(0))
+      .then(() => redis.exists('samsto:subaspmap:a'))
+      .then((found) => expect(found).to.equal(1))
       .then(() => redis.exists('somethingelse'))
       .then((found) => expect(found).to.equal(1))
       .then(() => done())

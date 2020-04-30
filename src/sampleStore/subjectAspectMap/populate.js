@@ -19,10 +19,13 @@ const samsto = require('../constants');
 
 /**
  * @param {object} redis - ioredis connection object
+ * @param {string} sampleKey - prefix of samples to find
  * @returns {object} readable stream of sample arrays
  */
-function createRedisSampleStream(redis) {
-  return redis.scanStream({ match: 'samsto:sample:*', count: 100 });
+function createRedisSampleStream(redis, sampleKey) {
+  const sampleMatch = `samsto:sample:${sampleKey}*`;
+  log(`Scanning samples for matches to: ${sampleMatch}`);
+  return redis.scanStream({ match: sampleMatch, count: 100 });
 }
 
 /**
@@ -63,11 +66,12 @@ function addEntriesToAspectSubjectMap(redis, listOfSamples) {
 
 /**
  * @param {object} redis - ioredis connection object
+ * @param {string} sampleKey - prefix of samples to find
  * @returns {Promise} - promise which resolves after all additions are made
  */
-function populateSubjectAspectMap(redis) {
+function populateSubjectAspectMap(redis, sampleKey = '') {
   return new Promise((resolve, reject) => {
-    const stream = createRedisSampleStream(redis);
+    const stream = createRedisSampleStream(redis, sampleKey);
     const addingJobs = [];
     stream.on('data', (listOfSamples) => {
       addingJobs.push(addEntriesToAspectSubjectMap(redis, listOfSamples)

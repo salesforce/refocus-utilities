@@ -12,6 +12,8 @@
 const expect = require('chai').expect;
 const populateSubjectAspectMap =
   require('../../../src/sampleStore/subjectAspectMap/populate');
+const deleteSubjectAspectMap =
+  require('../../../src/sampleStore/subjectAspectMap/delete');
 const Redis = require('ioredis-mock');
 const redis = new Redis();
 
@@ -28,6 +30,11 @@ describe('test/sampleStore/subjectAspectMap/populate.js >', () => {
       .then(() => done());
   });
 
+  afterEach((done) => {
+    deleteSubjectAspectMap(redis)
+      .then(done);
+  });
+
   it('ok - samsto:aspsubmap:___ added', (done) => {
     populateSubjectAspectMap(redis)
       .then(() => redis.smembers('samsto:subaspmap:canada'))
@@ -35,6 +42,22 @@ describe('test/sampleStore/subjectAspectMap/populate.js >', () => {
         .to.deep.equal(['temperature', 'humidity']))
       .then(() => redis.smembers('samsto:subaspmap:canada.manitoba'))
       .then((manitoba) => expect(manitoba)
+        .to.deep.equal(['temperature']))
+      .then(() => done())
+      .catch((err) => done(err));
+  });
+
+  it('ok - only added samples matching subjectKey to map', (done) => {
+    const sampleKey = 'canada.ontario';
+    populateSubjectAspectMap(redis, sampleKey)
+      .then(() => redis.smembers('samsto:subaspmap:canada'))
+      .then((canada) => expect(canada)
+        .to.deep.equal([]))
+      .then(() => redis.smembers('samsto:subaspmap:canada.manitoba'))
+      .then((manitoba) => expect(manitoba)
+        .to.deep.equal([]))
+      .then(() => redis.smembers('samsto:subaspmap:canada.ontario'))
+      .then((ontario) => expect(ontario)
         .to.deep.equal(['temperature']))
       .then(() => done())
       .catch((err) => done(err));

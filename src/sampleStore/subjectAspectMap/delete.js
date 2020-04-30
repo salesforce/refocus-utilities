@@ -33,12 +33,14 @@ function deleteSetOfSubAspMapEntries(redis, subaspmapList) {
 /**
  * Retrieves all members of subAspMap list, and deletes them
  * @param {Object} redis - redis connection object
+ * @param {string} subjectKey - prefix of subaspmap entries to find/delete
  * @returns {Promise} promise which resolves once deletion completes.
  */
-function deleteSubAspMap(redis) {
+function deleteSubAspMap(redis, subjectKey = '') {
   return new Promise((resolve) => {
-    log('Scanning for "samsto:subaspmap:*');
-    const stream = redis.scanStream({ match: 'samsto:subaspmap:*', count: 50 });
+    const subjectToMatch = `samsto:subaspmap:${subjectKey}*`;
+    log(`Scanning for ${subjectToMatch}`);
+    const stream = redis.scanStream({ match: subjectToMatch, count: 50 });
     let numberOfSubAspMapEntries = 0;
     stream.on('data', (subaspmapList) => deleteSetOfSubAspMapEntries(redis, subaspmapList)
       .then((numberOfDeletions) => {
