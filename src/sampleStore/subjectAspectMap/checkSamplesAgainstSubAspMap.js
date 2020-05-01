@@ -63,8 +63,9 @@ function checkSamplesAgainstSubAspMap(redis, subjectKey = '') {
                   debug(`Error: ${err}`);
                 }
                 if (code === 1) {
-                  debug(`${listOfSamples[i]} exists in subaspmap`);
                   numberOfSamplesWithAspSubMap += 1;
+                } else {
+                  debug(`${listOfSamples[i]} missing from subaspmap`);
                 }
               });
               end();
