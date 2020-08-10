@@ -2,6 +2,8 @@
 
 # refocus-utilities
 
+Note: this repository is infrequently maintained.
+
 ## Installation
 
 `npm install @salesforce/refocus-utilities`
