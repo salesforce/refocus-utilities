@@ -26,8 +26,10 @@ module.exports = {
     subjects: 'samsto:subjects:',
     sam: 'samsto:subaspmap:',
     subjectTags: 'samsto:subTags:',
+    subjectExists: 'samsto:subExists:',
     aspectTags: 'samsto:aspTags:',
     aspectWriters: 'samsto:aspWriters:',
     aspectRanges: 'samsto:aspRanges:',
+    aspectExists: 'samsto:aspExists:',
   },
 };

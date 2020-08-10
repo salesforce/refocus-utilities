@@ -12,7 +12,7 @@
 const expect = require('chai').expect;
 const subjectAttributesAsKeys =
   require('../../../src/sampleStore/attributesAsKeys/subjectAttributesAsKeys');
-const Redis = require('ioredis-mock');
+const Redis = require('ioredis');
 const redis = new Redis();
 const samsto = require('../../../src/sampleStore/constants');
 
@@ -63,8 +63,10 @@ describe('test/sampleStore/attributesAsKeys/subjectAttributesAsKeys.js >', () =>
       .then(() => done());
   });
 
+  after(() => redis.flushall());
+
   it('ok - subject attributes are added as keys', (done) => {
-    subjectAttributesAsKeys(redis, false)
+    subjectAttributesAsKeys(redis, false, false)
       .then(() => Promise.all([
         redis.exists(`${samsto.pfx.subjectTags}${subjRoot.absolutePath}`),
         redis.exists(`${samsto.pfx.subjectTags}${subjChildUnPub.absolutePath}`),
@@ -80,10 +82,10 @@ describe('test/sampleStore/attributesAsKeys/subjectAttributesAsKeys.js >', () =>
         expect(res2).to.equal(0);
         expect(res3).to.equal(0);
         expect(res4).to.equal(1);
-        expect(res5).to.deep.equal(['parent', 'root']);
-        expect(res6).to.deep.equal([]);
-        expect(res7).to.deep.equal([]);
-        expect(res8).to.deep.equal(['child']);
+        expect(res5).to.have.members(['parent', 'root']);
+        expect(res6).to.have.members([]);
+        expect(res7).to.have.members([]);
+        expect(res8).to.have.members(['child']);
         done();
       })
       .catch(done);
