@@ -17,17 +17,17 @@ const redis = new Redis();
 describe('test/sampleStore/aspectSubjectMap/delete.js >', () => {
   before((done) => {
     redis.hmset('samsto:aspsubmap:a', { a: 1 })
-    .then(() => redis.hmset('somethingelse', 'Should not be deleted'))
-    .then(() => done());
+      .then(() => redis.hmset('somethingelse', 'Should not be deleted'))
+      .then(() => done());
   });
 
   it('ok - matching key deleted, non-matching key not deleted', (done) => {
     asmDelete(redis)
-    .then(() => redis.exists('samsto:aspsubmap:a'))
-    .then((found) => expect(found).to.equal(0))
-    .then(() => redis.exists('somethingelse'))
-    .then((found) => expect(found).to.equal(1))
-    .then(() => done())
-    .catch(done);
+      .then(() => redis.exists('samsto:aspsubmap:a'))
+      .then((found) => expect(found).to.equal(0))
+      .then(() => redis.exists('somethingelse'))
+      .then((found) => expect(found).to.equal(1))
+      .then(() => done())
+      .catch(done);
   });
 });

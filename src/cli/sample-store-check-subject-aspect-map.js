@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, salesforce.com, inc.
+ * Copyright (c) 2020, salesforce.com, inc.
  * All rights reserved.
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or
@@ -7,7 +7,7 @@
  */
 
 /**
- * src/cli/sample-store-rebuild-aspect-subject-map.js
+ * src/cli/sample-store-check-subject-aspect-map.js
  *
  * Configure the CLI.
  */
@@ -32,6 +32,12 @@ const optionDefinitions = [
     alias: 'h',
     description: 'Print this usage guide',
   },
+  {
+    name: 'subjectkey',
+    alias: 's',
+    description: '(Optional, specify the start of the absolutePath of subjects to be updated',
+    type: String,
+  }
 ];
 
 /*
@@ -42,16 +48,17 @@ const sections = [
   {
     header: 'refocus-utilities',
     content:
-      'Use {bold sample-store-rebuild-aspect-subject-map} to rebuild the ' +
-      'Sample Store\'s Aspect-Subject Map in redis.',
+      'Use {bold sample-store-check-subject-aspect-map} to rebuild the ' +
+      'Sample Store\'s Subject-Aspect Map in redis.',
   },
   {
     header: 'Synopsis',
     content: [
-      '  $ node sample-store-rebuild-aspect-subject-map',
-      '  $ node sample-store-rebuild-aspect-subject-map [{bold --redisUrl} ' +
+      '  $ node sample-store-check-subject-aspect-map',
+      '  $ node sample-store-check-subject-aspect-map [{bold --redisUrl} ' +
         'redis://YOUR_REDIS_CONNECTION_URL]',
-      '  $ node sample-store-rebuild-aspect-subject-map {bold --help}',
+      '  $ node sample-store-check-subject-aspect-map {bold --help}',
+      '  $ node sample-store-check-subject-aspect-map {bold --subjectkey subject.child.subchild}'
     ],
     raw: true,
   },
@@ -64,7 +71,7 @@ const sections = [
 module.exports = {
   optionDefinitions,
   showUsage: (opts) => {
-    if (opts.hasOwnProperty('help')) {
+    if (Object.hasOwnProperty.call(opts, 'help')) {
       console.log(commandLineUsage(sections));
       process.exit(0);
     }

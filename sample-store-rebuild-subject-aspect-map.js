@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019, salesforce.com, inc.
+ * Copyright (c) 2020, salesforce.com, inc.
  * All rights reserved.
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or
@@ -7,43 +7,35 @@
  */
 
 /**
- * sample-store-attributes-as-keys.js
+ * sample-store-rebuild-subject-aspect-map.js
  *
- * Create subjects tags and aspect tags, writers and ranges
- * keys with corresponding sets.
- *
+ * Rebuild the Sample Store's Aspect-Subject Map in redis.
  * If user provides a redisUrl, use that. Otherwise, if there is a "REDIS_URL"
  * environment variable, use that. Otherwise, try local default redis instance.
  */
 
-const cmdName = 'sample-store-attributes-as-keys';
+const debug = require('debug')('refocus-utilities:sample-store-rebuild-subject-aspect-map');
+const cmdName = 'sample-store-rebuild-subject-aspect-map';
 const commandLineArgs = require('command-line-args');
 const Redis = require('ioredis');
-const subjectAttributesAsKeys =
-require('./src/sampleStore/attributesAsKeys/subjectAttributesAsKeys');
-const aspectAttributesAsKeys =
-require('./src/sampleStore/attributesAsKeys/aspectAttributesAsKeys');
-const cli = require('./src/cli/sample-store-attributes-as-keys');
+const samDelete = require('./src/sampleStore/subjectAspectMap/delete');
+const samPopulate = require('./src/sampleStore/subjectAspectMap/populate');
+const cli = require('./src/cli/sample-store-rebuild-subject-aspect-map');
 const startTime = new Date();
 const options = commandLineArgs(cli.optionDefinitions);
 const localRedis = 'redis://localhost:6379';
 
 cli.showUsage(options);
 
+
 const redisUrl = options.redisUrl || process.env.REDIS_URL || localRedis;
+const subjectkey = options.subjectkey || '';
+debug(options);
 console.log(`${cmdName} (redisUrl = "${redisUrl}")`);
 const redis = new Redis(redisUrl);
-
-let previewMode;
-
-if (Object.prototype.hasOwnProperty.call(options, 'preview')) {
-  previewMode = true;
-} else {
-  previewMode = false;
-}
-
-subjectAttributesAsKeys(redis, previewMode)
-  .then(() => aspectAttributesAsKeys(redis, previewMode))
+// Delete and rebuild the Aspect-Subject Map
+samDelete(redis, subjectkey)
+  .then(() => samPopulate(redis, subjectkey))
   .then(() => {
     console.log('Success! [%dms]', new Date() - startTime);
     process.exit(0);

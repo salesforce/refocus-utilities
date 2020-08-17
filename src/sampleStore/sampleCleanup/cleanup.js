@@ -20,7 +20,7 @@
  * Uses the ioredis streaming interface for the redis SCAN command
  * (https://github.com/luin/ioredis#streamify-scanning).
  */
-'use strict';
+
 const debug = require('debug')('refocus-utilities:sample-store-cleanup');
 const samsto = require('../constants');
 const helpers = require('../helpers');
@@ -28,8 +28,8 @@ const ONE = 1;
 const TWO = 2;
 const ZERO = 0;
 let samples = [];
-let deletedSample = [];
-let deletedSampleFromMasterList = [];
+const deletedSample = [];
+const deletedSampleFromMasterList = [];
 
 module.exports = (redis) => new Promise((resolve, reject) => {
   debug('Get Master samples list');
@@ -39,7 +39,7 @@ module.exports = (redis) => new Promise((resolve, reject) => {
       samples = s;
       debug('Checking whether each member of the set has a corresponding ' +
         `"${samsto.pfx.sample}[SAMPLE_NAME]" hash`);
-      existsCommands = s.map(sample => ['exists', sample]);
+      existsCommands = s.map((sample) => ['exists', sample]);
       return redis.multi(existsCommands).exec();
     })
     .then((res) => {
@@ -58,6 +58,7 @@ module.exports = (redis) => new Promise((resolve, reject) => {
       stream.on('data', (sampleStream) => {
         const subjaspCommands = [];
         const validSampleKeys = [];
+
         /**
          * If subject or aspect names from sample does not exist in sample store,
          * then add the sample to the delete list.
@@ -101,19 +102,17 @@ module.exports = (redis) => new Promise((resolve, reject) => {
                 deletedSample.push(sampleKey);
                 debug('Removing %s sample hash and entry from master list. ' +
                   'Reason: Subject or Aspect not present.', sampleKey);
+              } else if (samples.includes(sampleKey)) {
+                getHashCommands.push(['hgetall', sampleKey]);
+                filteredSampleKeys.push(sampleKey);
               } else {
-                if (samples.includes(sampleKey)) {
-                  getHashCommands.push(['hgetall', sampleKey]);
-                  filteredSampleKeys.push(sampleKey);
-                } else {
-                  deletedSample.push(sampleKey);
-                  debug('Removing %s sample hash. Reason: Sample not present ' +
+                deletedSample.push(sampleKey);
+                debug('Removing %s sample hash. Reason: Sample not present ' +
                     'in master list.', sampleKey);
-                }
               }
             });
 
-            return redis.multi(getHashCommands).exec()
+            return redis.multi(getHashCommands).exec();
           })
           .then((res) => {
             res.map((resEntry, currIdx) => {
@@ -139,8 +138,8 @@ module.exports = (redis) => new Promise((resolve, reject) => {
               deleteCommands.push(['del', sampleKey]);
             });
 
-            return redis.multi(deleteCommands).exec()
-          })
+            return redis.multi(deleteCommands).exec();
+          });
       });
 
       stream.on('end', () => {
@@ -155,7 +154,7 @@ module.exports = (redis) => new Promise((resolve, reject) => {
       });
     })
     .catch((err) => {
-      debug(`Got error: %o`, err);
+      debug('Got error: %o', err);
       console.log('Got error', err);
-    })
+    });
 });

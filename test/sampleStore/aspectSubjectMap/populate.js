@@ -18,27 +18,27 @@ const redis = new Redis();
 describe('test/sampleStore/aspectSubjectMap/populate.js >', () => {
   before((done) => {
     const pipeline = redis.pipeline()
-    .sadd('samsto:subjects',
-      'samsto:subject:canada',
-      'samsto:subject:canada.manitoba',
-      'samsto:subject:canada.ontario',
-      'samsto:subject:canada.quebec')
-    .sadd('samsto:subaspmap:canada')
-    .sadd('samsto:subaspmap:canada.manitoba', 'humidity', 'temperature')
-    .sadd('samsto:subaspmap:canada.ontario', 'temperature')
-    .sadd('samsto:subaspmap:canada.quebec', 'humidity')
-    .exec()
-    .then(() => done());
+      .sadd('samsto:subjects',
+        'samsto:subject:canada',
+        'samsto:subject:canada.manitoba',
+        'samsto:subject:canada.ontario',
+        'samsto:subject:canada.quebec')
+      .sadd('samsto:subaspmap:canada')
+      .sadd('samsto:subaspmap:canada.manitoba', 'humidity', 'temperature')
+      .sadd('samsto:subaspmap:canada.ontario', 'temperature')
+      .sadd('samsto:subaspmap:canada.quebec', 'humidity')
+      .exec()
+      .then(() => done());
   });
 
   it('ok - samsto:aspsubmap:___ added', (done) => {
     asmPopulate(redis)
-    .then(() => redis.smembers('samsto:aspsubmap:humidity'))
-    .then((humidity) => expect(humidity)
-      .to.deep.equal(['canada.manitoba', 'canada.quebec']))
-    .then(() => redis.smembers('samsto:aspsubmap:temperature'))
-    .then((temperature) => expect(temperature)
-      .to.deep.equal(['canada.manitoba', 'canada.ontario']))
-    .then(() => done());
+      .then(() => redis.smembers('samsto:aspsubmap:humidity'))
+      .then((humidity) => expect(humidity)
+        .to.deep.equal(['canada.manitoba', 'canada.quebec']))
+      .then(() => redis.smembers('samsto:aspsubmap:temperature'))
+      .then((temperature) => expect(temperature)
+        .to.deep.equal(['canada.manitoba', 'canada.ontario']))
+      .then(() => done());
   });
 });
